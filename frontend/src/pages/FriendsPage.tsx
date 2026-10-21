@@ -128,7 +128,7 @@ export const FriendsPage: FC = () => {
 
   if (!overview) {
     return (
-      <div className="mx-auto flex h-full w-full max-w-3xl flex-col gap-4 overflow-y-auto p-4">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
         <Skeleton className="h-28 w-full" />
         <Skeleton className="h-40 w-full" />
       </div>
@@ -138,7 +138,7 @@ export const FriendsPage: FC = () => {
   const { rewardGems, rewardLimit, maxFriends, maxPendingRequests } = overview.limits
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-3xl flex-col gap-4 overflow-y-auto p-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
       <div>
         <Typography.H2>Friends</Typography.H2>
         <Typography.Muted>

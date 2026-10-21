@@ -3,7 +3,7 @@
   <img width="330" height="230" alt="Dragon City" src="https://github.com/user-attachments/assets/1d1d8f52-cb5d-429e-bb72-e43ee86b1a44" />
 </div>
 
-**Dragon City Flash Restoration Project** — a historical preservation project for the original
+**Dragon City Legacy Server** — a historical preservation project for the original
 Adobe Flash version of Dragon City (2012–2020), kept alive by the community.
 
 [![Status](https://img.shields.io/badge/Status-In_Development-orange)]()
