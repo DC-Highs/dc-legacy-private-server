@@ -6,7 +6,8 @@ original en Adobe Flash (2012–2020), mantenido vivo por la comunidad.
 
 [![Estado](https://img.shields.io/badge/Estado-En_Desarrollo-orange)]()
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)]()
-[![Flask](https://img.shields.io/badge/Flask-Servidor_Local-lightgrey)]()
+[![Flask](https://img.shields.io/badge/Flask-Servidor-lightgrey)]()
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)]()
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-green.svg)](LICENSE)
 [![Comandos](https://img.shields.io/badge/Comandos_Implementados-60%2F104-yellow)]()
 
@@ -34,62 +35,74 @@ puedes contactarme antes de tomar cualquier acción formal.
 
 ## 🛠️ Estado del Desarrollo
 
-El servidor local es funcional y permite cargar el juego.
+El servidor es funcional: se juega en el navegador (Ruffle), con cuentas, y se despliega con Docker.
 
 | Módulo | Estado |
 |---|---|
 | Motor de Cría | ✅ Funcional |
 | Comandos (`packet.php`) | ⚠️ 60 / 104 implementados |
-| Minijuego: Reflejo del Dragón | ✅ Funcional |
-| Minijuego: Memoria | ❌ En desarrollo |
-| Minijuego: Tesoro | ❌ En desarrollo |
-
-### 🎮 Sobre los Minijuegos
-
-Los minijuegos incluidos en este proyecto **no forman parte del Dragon City original**.
-Son creaciones propias desarrolladas para suplir una limitación técnica del entorno local:
-dado que el sistema de compra de gemas no puede funcionar sin los servidores oficiales,
-estos minijuegos ofrecen al jugador una forma alternativa de obtenerlas y disfrutar
-del juego de manera completa.
-
+| Cuentas (registro, login, panel de admin) | ✅ Funcional |
+| Guardado en MongoDB, cuentas en PostgreSQL | ✅ Funcional |
+| Interfaz de minijuegos y mercado | ❌ Sin interfaz (la API sigue disponible) |
 
 ---
 
-## 🚀 Instalación
+## 🚀 Instalación (Docker)
+
+El servidor corre en contenedores: la aplicación, PostgreSQL (cuentas y sesiones) y MongoDB
+(el estado de cada jugador). Sirve igual en tu PC con Docker Desktop que en una VPS.
 
 ### Requisitos
 
-- Un navegador moderno. El juego se ejecuta con [Ruffle](https://ruffle.rs/), que se carga
-  desde `index.html`, así que ya no hace falta Flash Player (se necesita conexión a internet
-  para descargarlo desde unpkg).
-  - Alternativa: [FlashBrowser](https://github.com/radubirsan/FlashBrowser/releases/latest)
-    o [Pale Moon](https://www.palemoon.org/) con Flash Player.
-- Permisos de **administrador**: el servidor agrega entradas al archivo `hosts` de Windows
-  (y las elimina al cerrarse) y escucha en el puerto 80.
+- Docker con Docker Compose.
+- Los archivos del juego en `flash/`, `assets/` y `domains/` (no van dentro de la imagen: se
+  montan como volúmenes de solo lectura).
 
-### Opción A: ejecutable
+### Pasos
 
-1. Descarga la última versión desde la sección [Releases](../../releases/latest).
-2. Extrae el archivo `.zip` en la carpeta que prefieras.
-3. Ejecuta `Dragon City.exe` como administrador.
+```bash
+cp .env.example .env        # y completa POSTGRES_PASSWORD, MONGO_PASSWORD y ADMIN_*
+docker compose up -d --build
+```
 
-> ⚠️ **Nota:** Windows puede mostrar una advertencia de SmartScreen al ejecutar el archivo.
-> Haz clic en **"Más información" → "Ejecutar de todas formas"**. Esto es normal en ejecutables
-> que no están firmados digitalmente.
+Abre `http://localhost:8080` (o el `APP_PORT` que elijas), crea una cuenta y juega. Con
+`ADMIN_EMAIL` y `ADMIN_PASSWORD` se crea el primer administrador al iniciar; también puedes
+crearlo después:
 
-### Opción B: desde el código fuente
+```bash
+docker compose exec app python -m dragon_city create-admin --email tu@correo.com --password '...'
+```
 
-Requiere Python 3.9+ y [Poetry](https://python-poetry.org/).
+Las cuentas se registran con correo y contraseña (sin código de confirmación). Los
+administradores gestionan usuarios en `/admin`: crear, buscar, deshabilitar, cambiar
+contraseña, editar recursos, reiniciar la partida o borrar.
+
+### En una VPS
+
+- Los puertos de las bases de datos **no** se publican; solo la aplicación (`APP_PORT`).
+- Pon un proxy con HTTPS delante (nginx, Traefik, Caddy...) y en `.env` usa
+  `COOKIE_SECURE=true` y `TRUST_PROXY=true`. Sin HTTPS las contraseñas viajan sin cifrar.
+- El proxy no debe almacenar en búfer `/stream` (eventos del servidor); la aplicación ya envía
+  `X-Accel-Buffering: no`.
+- La aplicación usa **un solo proceso** a propósito (notificaciones en vivo, bloqueos por
+  jugador y límites de uso viven en memoria). No escales a varias réplicas.
+- Respaldo: `docker compose exec postgres pg_dump -U dragon dragoncity > cuentas.sql` y
+  `docker compose exec mongo mongodump -u dragon -p ... --authenticationDatabase admin --archive > partidas.archive`.
+
+### Desarrollo
 
 ```bash
 poetry install
-poetry run dragon-city      # ejecutar en una terminal con permisos de administrador
+cd frontend && npm install && npm run dev      # cliente web con recarga (proxy a :8080)
+poetry run pytest                              # pruebas (SQLite + mongomock, sin Docker)
 ```
 
-También funciona con `poetry run python -m dragon_city`. El nivel de logs se cambia con la
-variable de entorno `DRAGON_CITY_LOG_LEVEL` (por defecto `INFO`).
+---
 
-Después abre el navegador en `http://127.0.0.1:80`.
+## 🎮 Cómo Jugar
+
+- Abre el sitio, crea una cuenta o inicia sesión: el juego ocupa casi toda la pantalla, con un
+  encabezado para iniciar/cerrar sesión.
 
 ---
 
@@ -97,32 +110,31 @@ Después abre el navegador en `http://127.0.0.1:80`.
 
 ```
 src/dragon_city/
-├── __main__.py        # punto de entrada (hosts, servidor de políticas, Flask)
-├── app.py             # fábrica de la aplicación Flask (CORS + blueprints)
-├── enums.py           # comandos, eventos SSE, recursos, atributos...
-├── config.py          # rutas y constantes
-├── storage.py         # lectura/escritura de configuración y partidas (web/srv)
-├── commands/          # un módulo por comando de packet.php
-├── game/              # reglas: cría, mercado negro, mercado, PvP, dragonario...
-└── routes/            # blueprints HTTP (páginas, srv, packet, mercado, minijuegos...)
+├── cli.py, wsgi.py     # comandos (migrate, create-admin...) y entrada de gunicorn
+├── app.py              # fábrica de Flask
+├── config.py           # configuración por variables de entorno
+├── db/                 # modelos SQLAlchemy (PostgreSQL) y acceso a MongoDB
+├── auth/               # contraseñas (Argon2id), sesiones, protección CSRF
+├── api/                # API JSON: auth, admin, arranque del juego
+├── commands/           # un módulo por comando de packet.php + validación
+├── game/               # reglas: cría, mercado negro, mercado, PvP, dragonario...
+├── routes/             # endpoints del protocolo original y archivos del juego
+└── migrations/         # migraciones de PostgreSQL (Alembic)
+frontend/               # cliente web (Vite, React, shadcn/ui)
+docs/SECURITY.md        # modelo de seguridad y vulnerabilidades corregidas
 ```
 
 Para agregar un comando, crea un módulo en `commands/` con un manejador decorado con
-`@command(Command.X)` (y agrega el valor al enum `Command`).
-
----
-
-## 🎮 Cómo Jugar
-
-- Inicia el servidor y navega a `http://127.0.0.1:80` en tu navegador.
-- Crea un perfil en la pantalla de inicio y disfruta.
+`@command(Command.X)`, valida **todos** los argumentos con los helpers de `ctx` y agrega el
+valor al enum `Command`. Lee `docs/SECURITY.md` antes.
 
 ---
 
 ## 💾 Guardado
 
-El progreso se guarda localmente en archivos `.json` dentro de la carpeta `web/srv/`
-Cuando crees un usuario, usá los botones Exportar / Importar que están en login.html para hacer copias de seguridad de tus usuarios (esto respalda los usuarios creados, no las partidas).
+El progreso de cada jugador se guarda en MongoDB (colección `players`); las cuentas y sesiones,
+en PostgreSQL. Los archivos de `web/srv/` (configuración del juego, plantilla de jugador y
+oponentes PvP) son datos de arranque de solo lectura.
 
 ---
 

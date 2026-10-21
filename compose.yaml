@@ -1,0 +1,77 @@
+name: dragon-city
+
+services:
+  app:
+    build: .
+    image: dragon-city:latest
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: dragon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: dragoncity
+      MONGO_URL: mongodb://mongo:27017
+      MONGO_USER: dragon
+      MONGO_PASSWORD: ${MONGO_PASSWORD:?Set MONGO_PASSWORD in .env}
+      MONGO_DB: dragoncity
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+      SESSION_DAYS: ${SESSION_DAYS:-14}
+      GAME_SWF: ${GAME_SWF:-Base_sec_0.6.7c.swf}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      # The game files are not part of the image: they are large and not ours to redistribute.
+      - ./flash:/data/flash:ro
+      - ./assets:/data/assets:ro
+      - ./domains:/data/domains:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    networks: [backend]
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dragon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: dragoncity
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dragon -d dragoncity"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [backend]
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: dragon
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?Set MONGO_PASSWORD in .env}
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [backend]
+
+# The databases are only reachable from the app: they publish no ports.
+networks:
+  backend:
+
+volumes:
+  postgres-data:
+  mongo-data:
