@@ -18,10 +18,10 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [project.scripts]
-dragon-city = "dragon_city.cli:main"
+dragon-city = "src.cli:main"
 
 [tool.poetry]
-packages = [{ include = "dragon_city", from = "src" }]
+packages = [{ include = "src" }]
 
 [dependency-groups]
 dev = [

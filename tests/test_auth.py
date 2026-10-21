@@ -59,8 +59,8 @@ def test_login_is_case_insensitive_and_logout_ends_the_session(client):
 
 
 def test_password_is_stored_hashed(client, player):
-    from dragon_city.db.models import User
-    from dragon_city.db.postgres import session_scope
+    from src.db.models import User
+    from src.db.postgres import session_scope
 
     with session_scope() as session:
         user = session.get(User, player["id"])

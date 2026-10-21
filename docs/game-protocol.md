@@ -54,7 +54,7 @@ Response:
 ## Commands
 
 60 of the 104 commands the client can send are implemented; the rest get the generic `ok`. Each
-lives in `src/dragon_city/commands/<name>.py`. Arguments are listed in order. "Needs" is what
+lives in `src/commands/<name>.py`. Arguments are listed in order. "Needs" is what
 the server checks before changing anything.
 
 ### Buildings and the map
@@ -153,5 +153,5 @@ the server checks before changing anything.
 |---|---|---|
 | `sync`, `ping` | – | Keep-alive; nothing changes. |
 
-> The authoritative list is the `Command` enum in `src/dragon_city/enums.py`; the exact rules
+> The authoritative list is the `Command` enum in `src/enums.py`; the exact rules
 > are in each command module.

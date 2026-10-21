@@ -28,9 +28,9 @@ reload:
    ```bash
    export POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=25432 POSTGRES_PASSWORD=dev
    export MONGO_URL=mongodb://127.0.0.1:27018
-   poetry run python -m dragon_city migrate
-   poetry run python -m dragon_city create-admin --email dev@example.com --password 'dev-password-1'
-   poetry run python -m dragon_city serve        # http://127.0.0.1:8080
+   poetry run python -m src migrate
+   poetry run python -m src create-admin --email dev@example.com --password 'dev-password-1'
+   poetry run python -m src serve        # http://127.0.0.1:8080
    ```
 
 3. In another terminal, start the web client with hot reload:
@@ -69,25 +69,25 @@ The web client has no automated tests; it is type-checked and built with `npm ru
 
 ## Database migrations
 
-When you change `src/dragon_city/db/models.py`:
+When you change `src/db/models.py`:
 
 ```bash
 # with PostgreSQL running and reachable through the POSTGRES_* variables
 poetry run python - <<'EOF'
 from alembic import command
-from dragon_city.cli import _alembic_config
+from src.cli import _alembic_config
 command.revision(_alembic_config(), message="describe the change", autogenerate=True)
 EOF
 ```
 
-Review the generated file in `src/dragon_city/migrations/versions/` (remove SQLite-only
-variants, check defaults), then `poetry run python -m dragon_city migrate`. To confirm the models
+Review the generated file in `src/migrations/versions/` (remove SQLite-only
+variants, check defaults), then `poetry run python -m src migrate`. To confirm the models
 and the migrations agree, run `alembic.command.check(_alembic_config())`: it must report "No new
 upgrade operations detected".
 
 ## Adding a command
 
-A command is a module in `src/dragon_city/commands/`:
+A command is a module in `src/commands/`:
 
 1. Add the wire name to the `Command` enum in `enums.py`.
 2. Create `commands/<name>.py`:
@@ -95,9 +95,9 @@ A command is a module in `src/dragon_city/commands/`:
    ```python
    import logging
 
-   from dragon_city.commands.base import CommandContext, command
-   from dragon_city.commands.validation import reject
-   from dragon_city.enums import Command
+   from src.commands.base import CommandContext, command
+   from src.commands.validation import reject
+   from src.enums import Command
 
    logger = logging.getLogger(__name__)
 

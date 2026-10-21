@@ -101,7 +101,7 @@ Open <http://localhost:8080>, create an account and play. If you set `ADMIN_EMAI
 `ADMIN_PASSWORD`, that administrator is created on start-up; otherwise create one with:
 
 ```bash
-docker compose exec app python -m dragon_city create-admin --email you@example.com --password '...'
+docker compose exec app python -m src create-admin --email you@example.com --password '...'
 ```
 
 Running it on a server? Read [docs/deployment.md](docs/deployment.md): put an HTTPS reverse
@@ -129,7 +129,7 @@ proxy in front of it and set `COOKIE_SECURE=true` and `TRUST_PROXY=true`.
 ## Project layout
 
 ```
-src/dragon_city/
+src/
 ├── cli.py, wsgi.py     # command line (migrate, create-admin, ...) and the gunicorn entry point
 ├── app.py              # Flask application factory
 ├── config.py           # settings read from environment variables

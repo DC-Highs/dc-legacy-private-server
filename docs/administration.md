@@ -46,10 +46,10 @@ Run these inside the app container (`docker compose exec app ...`) or, without D
 
 | Command | Purpose |
 |---|---|
-| `python -m dragon_city create-admin --email E --password P` | Create an administrator (or return the existing account with that email). |
-| `python -m dragon_city migrate` | Apply the PostgreSQL migrations (the container does this on start). |
-| `python -m dragon_city seed` | Import the bundled PvP opponents if the database has none. |
-| `python -m dragon_city serve` | Development server on `127.0.0.1:8080` (production uses gunicorn). |
+| `python -m src create-admin --email E --password P` | Create an administrator (or return the existing account with that email). |
+| `python -m src migrate` | Apply the PostgreSQL migrations (the container does this on start). |
+| `python -m src seed` | Import the bundled PvP opponents if the database has none. |
+| `python -m src serve` | Development server on `127.0.0.1:8080` (production uses gunicorn). |
 
 ## PvP opponents
 

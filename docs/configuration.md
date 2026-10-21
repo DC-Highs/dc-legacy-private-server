@@ -2,7 +2,7 @@
 
 The server is configured with environment variables. With Docker Compose you set them in a
 `.env` file next to `compose.yaml` (start from `.env.example`); compose passes the right ones
-to the containers. The code reads them in `src/dragon_city/config.py`.
+to the containers. The code reads them in `src/config.py`.
 
 ## Compose variables (`.env`)
 

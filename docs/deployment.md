@@ -15,7 +15,7 @@ named volumes `postgres-data` and `mongo-data`.
 
 On start-up the `app` container:
 
-1. waits for PostgreSQL and applies the migrations (`python -m dragon_city migrate`);
+1. waits for PostgreSQL and applies the migrations (`python -m src migrate`);
 2. starts gunicorn;
 3. creates the MongoDB indexes, imports the bundled PvP opponents if the database is empty,
    creates the bootstrap administrator from `ADMIN_EMAIL`/`ADMIN_PASSWORD` (if set), and
@@ -96,7 +96,7 @@ databases should not be exposed publicly.
 - If you did not set `ADMIN_EMAIL`/`ADMIN_PASSWORD`, create an administrator:
 
   ```bash
-  docker compose exec app python -m dragon_city create-admin --email you@example.com --password '...'
+  docker compose exec app python -m src create-admin --email you@example.com --password '...'
   ```
 
   `ADMIN_PASSWORD` stays in `.env`; change the password in the panel after the first login and

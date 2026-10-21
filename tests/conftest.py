@@ -9,15 +9,15 @@ import pytest
 from sqlalchemy.pool import StaticPool
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT))
 
-from dragon_city import storage  # noqa: E402
-from dragon_city.app import create_app  # noqa: E402
-from dragon_city.config import get_settings  # noqa: E402
-from dragon_city.db.models import Base  # noqa: E402
-from dragon_city.db.mongo import init_mongo  # noqa: E402
-from dragon_city.db.postgres import init_engine  # noqa: E402
-from dragon_city.extensions import limiter  # noqa: E402
+from src import storage  # noqa: E402
+from src.app import create_app  # noqa: E402
+from src.config import get_settings  # noqa: E402
+from src.db.models import Base  # noqa: E402
+from src.db.mongo import init_mongo  # noqa: E402
+from src.db.postgres import init_engine  # noqa: E402
+from src.extensions import limiter  # noqa: E402
 
 PASSWORD = "correct horse battery"
 
@@ -31,7 +31,7 @@ def app():
     flask_app = create_app(run_startup=False)
     flask_app.config["TESTING"] = True
     limiter.reset()
-    from dragon_city.game.pvp import seed_pvp_data
+    from src.game.pvp import seed_pvp_data
 
     seed_pvp_data()
     yield flask_app
@@ -56,8 +56,8 @@ def player(client):
 
 
 def create_admin_client(app, email="admin@example.com"):
-    from dragon_city.auth import service
-    from dragon_city.db.postgres import session_scope
+    from src.auth import service
+    from src.db.postgres import session_scope
 
     with session_scope() as session:
         service.create_user(session, email, PASSWORD, is_admin=True)

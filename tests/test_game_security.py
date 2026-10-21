@@ -62,7 +62,7 @@ def test_the_userid_sent_by_the_client_is_ignored(app, client, player):
 def test_visiting_an_unknown_neighbour_does_not_create_a_save(client, player):
     response = client.get("/static/dragoncity/srv/get_player_info.json?user=999999999")
     assert response.status_code == 404
-    from dragon_city import storage
+    from src import storage
     assert not storage.player_exists(999999999)
 
 
@@ -91,7 +91,7 @@ def test_buy_needs_the_money_and_a_free_slot(client, player):
 
 
 def test_free_or_unsellable_items_cannot_be_bought(client, player):
-    from dragon_city import storage
+    from src import storage
     free_item = next(i["id"] for i in storage.load_base_config()["items"] if not i.get("costs") and i["group_type"] != "DRAGON")
     give(player["id"], gold=10 ** 6)
     packet(client, ("buy", ["701", free_item, 3, 3, 0, 0, 1]), ("buy", ["702", DRAGON, 3, 3, 0, 0, 1]))
@@ -151,8 +151,8 @@ def test_a_packet_is_capped_to_200_commands(client, player):
 
 
 def test_a_failing_command_leaves_no_partial_changes(client, player, monkeypatch):
-    from dragon_city.commands import base
-    from dragon_city.enums import Command
+    from src.commands import base
+    from src.enums import Command
 
     def half_done(ctx):
         ctx.info["gold"] = 1
@@ -316,7 +316,7 @@ def test_expansions_are_paid_for(client, player):
 
 
 def test_training_takes_its_time(client, player):
-    from dragon_city import storage
+    from src import storage
     config = storage.load_base_config()
     dragon_cfg = next(i for i in config["items"] if i["id"] == DRAGON)
     attack = dragon_cfg["trainable_attacks"][0]
@@ -334,7 +334,7 @@ def test_training_takes_its_time(client, player):
 
 
 def test_speed_training_cannot_be_used_for_free(client, player):
-    from dragon_city import storage
+    from src import storage
     attack = next(i for i in storage.load_base_config()["items"] if i["id"] == DRAGON)["trainable_attacks"][0]
     add_item(player["id"], 841, 12)
     edit_save(player["id"], lambda d: d["map"]["dragons"].append(

@@ -1,6 +1,6 @@
 import pytest
 
-from dragon_city.config import get_settings
+from src.config import get_settings
 
 
 @pytest.fixture()

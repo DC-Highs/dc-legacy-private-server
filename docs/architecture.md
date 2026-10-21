@@ -61,8 +61,8 @@ Request pipeline (`auth/context.py`), for every request:
 | `users` | `id` (identity, starts at 200000000), `email` (unique, lower-case), `password_hash` (Argon2id), `is_admin`, `is_active`, `created_at`, `last_login_at` |
 | `sessions` | `token_hash` (SHA-256 of the cookie token, primary key), `user_id` (cascade delete), `created_at`, `last_seen_at`, `expires_at`, `ip`, `user_agent` |
 
-Schema changes go through migrations in `src/dragon_city/migrations/versions/`, applied by
-`python -m dragon_city migrate` (the container does it on every start).
+Schema changes go through migrations in `src/migrations/versions/`, applied by
+`python -m src migrate` (the container does it on every start).
 
 ### MongoDB (pymongo)
 
