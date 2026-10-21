@@ -3,6 +3,7 @@ print(" INICIANDO SERVIDOR LOCAL: DRAGON CITY v1.0 ")
 print("="*55)
 print("[+] Inicializando módulos de Flask y dependencias...")
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 import json
 import os
 import time
@@ -20,6 +21,7 @@ import socket
 import threading
 
 app = Flask(__name__)
+CORS(app)
 
 jugadores_sse = {}
 
