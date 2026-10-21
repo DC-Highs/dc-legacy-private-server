@@ -1,160 +1,166 @@
-<img width="330" height="230" alt="image" src="https://github.com/user-attachments/assets/1d1d8f52-cb5d-429e-bb72-e43ee86b1a44" />
+<img width="330" height="230" alt="Dragon City" src="https://github.com/user-attachments/assets/1d1d8f52-cb5d-429e-bb72-e43ee86b1a44" />
 
+**Dragon City Flash Restoration Project** — a historical preservation project for the original
+Adobe Flash version of Dragon City (2012–2020), kept alive by the community.
 
-**Dragon City Flash Restoration Project** — Un proyecto de preservación histórica del juego
-original en Adobe Flash (2012–2020), mantenido vivo por la comunidad.
-
-[![Estado](https://img.shields.io/badge/Estado-En_Desarrollo-orange)]()
+[![Status](https://img.shields.io/badge/Status-In_Development-orange)]()
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)]()
-[![Flask](https://img.shields.io/badge/Flask-Servidor-lightgrey)]()
+[![Flask](https://img.shields.io/badge/Flask-Server-lightgrey)]()
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)]()
-[![Licencia](https://img.shields.io/badge/Licencia-MIT-green.svg)](LICENSE)
-[![Comandos](https://img.shields.io/badge/Comandos_Implementados-60%2F104-yellow)]()
+[![Commands](https://img.shields.io/badge/Commands_Implemented-60%2F104-yellow)]()
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
-## ⚠️ Aviso Legal / Legal Notice
+## ⚠️ Legal notice
 
-**Este proyecto es de uso estrictamente educativo y de preservación histórica.**
-*Dragon City* y todos sus activos visuales, de audio y de marca son propiedad intelectual
-de **SocialPoint / Take-Two Interactive**.
+**This project is strictly for educational and historical preservation purposes.**
+*Dragon City* and all of its visual, audio and brand assets are the intellectual property of
+**SocialPoint / Take-Two Interactive**.
 
-Este servidor local:
-- **NO** tiene fines de lucro ni distribuye el juego comercialmente.
-- **NO** compite con las versiones actuales del juego (móvil / Windows).
-- Opera bajo el amparo de las exenciones a la **Sección 1201 de la DMCA**, relativas a la
-  preservación de videojuegos cuyos servidores de autenticación originales han sido
-  apagados de forma permanente.
-- Utiliza protocolos y activos de la versión de **Adobe Flash**, plataforma
-  oficialmente descontinuada desde diciembre de 2020.
+This server:
 
-Si eres representante legal de SocialPoint o Take-Two Interactive y tienes alguna consulta,
-puedes contactarme antes de tomar cualquier acción formal.
+- is **not** for profit and does not distribute the game commercially;
+- does **not** compete with the current versions of the game (mobile / Windows);
+- operates under the exemptions to **Section 1201 of the DMCA** for the preservation of video
+  games whose original authentication servers have been permanently shut down;
+- uses protocols and assets of the **Adobe Flash** version, a platform officially discontinued
+  in December 2020.
+
+If you legally represent SocialPoint or Take-Two Interactive and have any concern, please
+contact the maintainers before taking any formal action.
+
+The game files (`flash/`, `assets/`, `domains/`) are **not** part of the container image and
+are not covered by the MIT license.
 
 ---
 
-## 🛠️ Estado del Desarrollo
+## What it is
 
-El servidor es funcional: se juega en el navegador (Ruffle), con cuentas, y se despliega con Docker.
+A server that replaces the original Dragon City back end, plus a web client that runs the
+Flash game in the browser with [Ruffle](https://ruffle.rs/).
 
-| Módulo | Estado |
+- **Play in the browser:** the game fills almost the whole screen under a small header with
+  log in / log out. No Flash Player and no hosts-file tricks.
+- **Accounts:** sign up with an email, a password and its confirmation (no email code). Each
+  account is one player.
+- **Admin panel:** administrators create and manage users from `/admin`.
+- **Storage:** accounts and sessions in PostgreSQL, each player's save in MongoDB.
+- **Hardened:** the client is treated as untrusted; every command is validated server-side.
+  See [docs/SECURITY.md](docs/SECURITY.md).
+- **Docker:** `docker compose up` runs everything, on your PC or on a VPS.
+
+### Status
+
+| Area | Status |
 |---|---|
-| Motor de Cría | ✅ Funcional |
-| Comandos (`packet.php`) | ⚠️ 60 / 104 implementados |
-| Cuentas (registro, login, panel de admin) | ✅ Funcional |
-| Guardado en MongoDB, cuentas en PostgreSQL | ✅ Funcional |
-| Interfaz de minijuegos y mercado | ❌ Sin interfaz (la API sigue disponible) |
+| Breeding engine | ✅ Working |
+| Game commands (`packet.php`) | ⚠️ 60 / 104 implemented |
+| Accounts, login, admin panel | ✅ Working |
+| Saves in MongoDB, accounts in PostgreSQL | ✅ Working |
+| Docker deployment | ✅ Working |
+| Market and minigame pages | ❌ No web UI (the API is still there) |
+| Friend system | 💡 Planned, see [docs/ROADMAP.md](docs/ROADMAP.md) |
+
+Commands that are not implemented are answered with a generic `ok` so the client keeps
+running.
 
 ---
 
-## 🚀 Instalación (Docker)
+## Screenshots
 
-El servidor corre en contenedores: la aplicación, PostgreSQL (cuentas y sesiones) y MongoDB
-(el estado de cada jugador). Sirve igual en tu PC con Docker Desktop que en una VPS.
+> 📸 **Screenshot needed:** the game running in the browser, full screen under the header
+> (log in as a player and wait for the island to load).
+> Save it as `docs/images/game.png`, then replace this block with `![The game](docs/images/game.png)`.
 
-### Requisitos
+> 📸 **Screenshot needed:** the sign-up page (email, password, confirm password).
+> Save it as `docs/images/register.png`, then replace this block with `![Sign up](docs/images/register.png)`.
 
-- Docker con Docker Compose.
-- Los archivos del juego en `flash/`, `assets/` y `domains/` (no van dentro de la imagen: se
-  montan como volúmenes de solo lectura).
+> 📸 **Screenshot needed:** the admin panel with the users table.
+> Save it as `docs/images/admin-users.png`, then replace this block with `![Admin panel](docs/images/admin-users.png)`.
 
-### Pasos
+The full list of screenshots the documentation expects is in [docs/images/README.md](docs/images/README.md).
+
+---
+
+## Quick start
+
+You need Docker with Docker Compose, and the game files in `flash/`, `assets/` and `domains/`.
 
 ```bash
-cp .env.example .env        # y completa POSTGRES_PASSWORD, MONGO_PASSWORD y ADMIN_*
+cp .env.example .env            # set POSTGRES_PASSWORD, MONGO_PASSWORD and ADMIN_*
 docker compose up -d --build
 ```
 
-Abre `http://localhost:8080` (o el `APP_PORT` que elijas), crea una cuenta y juega. Con
-`ADMIN_EMAIL` y `ADMIN_PASSWORD` se crea el primer administrador al iniciar; también puedes
-crearlo después:
+Open <http://localhost:8080>, create an account and play. If you set `ADMIN_EMAIL` and
+`ADMIN_PASSWORD`, that administrator is created on start-up; otherwise create one with:
 
 ```bash
-docker compose exec app python -m dragon_city create-admin --email tu@correo.com --password '...'
+docker compose exec app python -m dragon_city create-admin --email you@example.com --password '...'
 ```
 
-Las cuentas se registran con correo y contraseña (sin código de confirmación). Los
-administradores gestionan usuarios en `/admin`: crear, buscar, deshabilitar, cambiar
-contraseña, editar recursos, reiniciar la partida o borrar.
-
-### En una VPS
-
-- Los puertos de las bases de datos **no** se publican; solo la aplicación (`APP_PORT`).
-- Pon un proxy con HTTPS delante (nginx, Traefik, Caddy...) y en `.env` usa
-  `COOKIE_SECURE=true` y `TRUST_PROXY=true`. Sin HTTPS las contraseñas viajan sin cifrar.
-- El proxy no debe almacenar en búfer `/stream` (eventos del servidor); la aplicación ya envía
-  `X-Accel-Buffering: no`.
-- La aplicación usa **un solo proceso** a propósito (notificaciones en vivo, bloqueos por
-  jugador y límites de uso viven en memoria). No escales a varias réplicas.
-- Respaldo: `docker compose exec postgres pg_dump -U dragon dragoncity > cuentas.sql` y
-  `docker compose exec mongo mongodump -u dragon -p ... --authenticationDatabase admin --archive > partidas.archive`.
-
-### Desarrollo
-
-```bash
-poetry install
-cd frontend && npm install && npm run dev      # cliente web con recarga (proxy a :8080)
-poetry run pytest                              # pruebas (SQLite + mongomock, sin Docker)
-```
+Running it on a server? Read [docs/deployment.md](docs/deployment.md): put an HTTPS reverse
+proxy in front of it and set `COOKIE_SECURE=true` and `TRUST_PROXY=true`.
 
 ---
 
-## 🎮 Cómo Jugar
+## Documentation
 
-- Abre el sitio, crea una cuenta o inicia sesión: el juego ocupa casi toda la pantalla, con un
-  encabezado para iniciar/cerrar sesión.
+| Document | What is in it |
+|---|---|
+| [docs/deployment.md](docs/deployment.md) | Running with Docker, on a VPS, behind a proxy, backups, updates |
+| [docs/configuration.md](docs/configuration.md) | Every environment variable and the game-file volumes |
+| [docs/architecture.md](docs/architecture.md) | Components, request flow, data model, design decisions |
+| [docs/api.md](docs/api.md) | The JSON API used by the web client and the admin panel |
+| [docs/game-protocol.md](docs/game-protocol.md) | The Flash client's endpoints and the `packet.php` commands |
+| [docs/administration.md](docs/administration.md) | The admin panel and the command line |
+| [docs/development.md](docs/development.md) | Local setup, tests, migrations, adding a command |
+| [docs/SECURITY.md](docs/SECURITY.md) | Threat model, fixed vulnerabilities, known limits |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Tasks and ideas for the future |
+| [docs/images/README.md](docs/images/README.md) | The screenshots the documentation is missing |
 
 ---
 
-## 🧱 Estructura del Proyecto
+## Project layout
 
 ```
 src/dragon_city/
-├── cli.py, wsgi.py     # comandos (migrate, create-admin...) y entrada de gunicorn
-├── app.py              # fábrica de Flask
-├── config.py           # configuración por variables de entorno
-├── db/                 # modelos SQLAlchemy (PostgreSQL) y acceso a MongoDB
-├── auth/               # contraseñas (Argon2id), sesiones, protección CSRF
-├── api/                # API JSON: auth, admin, arranque del juego
-├── commands/           # un módulo por comando de packet.php + validación
-├── game/               # reglas: cría, mercado negro, mercado, PvP, dragonario...
-├── routes/             # endpoints del protocolo original y archivos del juego
-└── migrations/         # migraciones de PostgreSQL (Alembic)
-frontend/               # cliente web (Vite, React, shadcn/ui)
-docs/SECURITY.md        # modelo de seguridad y vulnerabilidades corregidas
+├── cli.py, wsgi.py     # command line (migrate, create-admin, ...) and the gunicorn entry point
+├── app.py              # Flask application factory
+├── config.py           # settings read from environment variables
+├── db/                 # SQLAlchemy models (PostgreSQL) and MongoDB access
+├── auth/               # Argon2id passwords, sessions, CSRF/origin checks
+├── api/                # JSON API: auth, admin, game bootstrap
+├── commands/           # one module per packet.php command, plus argument validation
+├── game/               # rules: breeding, black market, market, PvP, dragonarium...
+├── routes/             # the original game's endpoints and the game files
+└── migrations/         # PostgreSQL migrations (Alembic)
+frontend/               # web client (Vite, React, shadcn/ui)
+docker/                 # container entrypoint and gunicorn settings
+tests/                  # pytest suite (SQLite + mongomock, no Docker needed)
+web/srv/                # read-only seed data: game config, player template, PvP opponents
+docs/                   # documentation
 ```
 
-Para agregar un comando, crea un módulo en `commands/` con un manejador decorado con
-`@command(Command.X)`, valida **todos** los argumentos con los helpers de `ctx` y agrega el
-valor al enum `Command`. Lee `docs/SECURITY.md` antes.
+---
+
+## About digital heritage preservation
+
+- [Exemption to PCCPSACT](https://www.federalregister.gov/documents/2018/10/26/2018-23241/exemption-to-prohibition-on-circumvention-of-copyright-protection-systems-for-access-control) — exemptions to Section 1201 of the DMCA.
+- [EFGAMP](https://efgamp.eu/) — European Federation of Game Archives, Museums and Preservation Projects.
+- [BlueMaxima's Flashpoint](https://bluemaxima.org/flashpoint/) — the definitive web-game preservation project.
+- [The Internet Archive](https://archive.org/) — a digital library of cultural artifacts.
+- [UNESCO PERSIST Programme](https://unescopersist.org/) — continued access to digital information.
+- [Adobe Flash Player Archive](https://archive.org/download/flashplayerarchive/) — historical Flash Player archive.
 
 ---
 
-## 💾 Guardado
+## License
 
-El progreso de cada jugador se guarda en MongoDB (colección `players`); las cuentas y sesiones,
-en PostgreSQL. Los archivos de `web/srv/` (configuración del juego, plantilla de jugador y
-oponentes PvP) son datos de arranque de solo lectura.
+The server source code (`src/`, `frontend/`, `docker/`, `tests/`, `docs/`) is under the
+[MIT License](LICENSE).
 
----
+The original game assets (`.swf`, images, audio) are **not** covered by that license: they
+belong to SocialPoint / Take-Two Interactive.
 
-## 📚 Sobre la Preservación del Patrimonio Digital
-
-- [Exemption to PCCPSACT](https://www.federalregister.gov/documents/2018/10/26/2018-23241/exemption-to-prohibition-on-circumvention-of-copyright-protection-systems-for-access-control) — Exenciones a la Sección 1201 de la DMCA.
-- [EFGAMP](https://efgamp.eu/) — Federación Europea de Archivos y Museos de Videojuegos.
-- [BlueMaxima's Flashpoint](https://bluemaxima.org/flashpoint/) — Proyecto definitivo de preservación de juegos web.
-- [The Internet Archive](https://archive.org/) — Biblioteca digital de artefactos culturales.
-- [UNESCO PERSIST Programme](https://unescopersist.org/) — Acceso continuo a la información digital.
-- [Adobe Flash Player Archive](https://archive.org/download/flashplayerarchive/) — Archivo histórico de Flash Player.
-
----
-
-## 📄 Licencia
-
-El código fuente del servidor (`src/`, y los `.html` adaptados) está bajo la
-[Licencia MIT](LICENSE).
-
-Los activos originales del juego (`.swf`, imágenes, audio) **no** están cubiertos por esa
-licencia: pertenecen a SocialPoint / Take-Two Interactive.
-
-Autores: [Gabriel18017](https://github.com/Gabriel18017) y [Marcuth](https://github.com/Marcuth).
+Authors: [Gabriel18017](https://github.com/Gabriel18017) and [Marcuth](https://github.com/Marcuth).
