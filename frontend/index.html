@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dragon City</title>
+    <script>
+      // Ruffle emulates Flash in the browser; it reads this config when it loads.
+      window.RufflePlayer = window.RufflePlayer || {};
+      window.RufflePlayer.config = {
+        ...window.RufflePlayer.config,
+        publicPath: "https://unpkg.com/@ruffle-rs/ruffle/",
+        polyfills: false,
+        logLevel: "warn",
+      };
+    </script>
+    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
