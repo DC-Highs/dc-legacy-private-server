@@ -1,6 +1,7 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import MAX_COORDINATE, MAX_SMALL_INT
 from dragon_city.enums import Command
 
 logger = logging.getLogger(__name__)
@@ -8,18 +9,14 @@ logger = logging.getLogger(__name__)
 
 @command(Command.MOVE)
 def handle(ctx: CommandContext) -> None:
-    iso_id = str(ctx.args[0])
-    tx = ctx.args[1]
-    ty = ctx.args[2]
-    frame = ctx.args[3]
+    iso_id = ctx.iso_arg(0)
+    tx = ctx.int_arg(1, "x", 0, MAX_COORDINATE)
+    ty = ctx.int_arg(2, "y", 0, MAX_COORDINATE)
+    frame = ctx.int_arg(3, "frame", 0, MAX_SMALL_INT)
 
-    items = ctx.map["items"]
-    if iso_id not in items:
-        logger.warning("Object with iso id %s not found on the map", iso_id)
-        return
-
-    items[iso_id][1] = tx
-    items[iso_id][2] = ty
-    items[iso_id][4] = frame
+    item = ctx.map_item(iso_id)
+    item[1] = tx
+    item[2] = ty
+    item[4] = frame
 
     logger.info("Moved object %s to (%s, %s) with rotation %s", iso_id, tx, ty, frame)

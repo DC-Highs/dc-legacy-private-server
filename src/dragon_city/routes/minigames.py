@@ -1,48 +1,58 @@
-"""Minigame rewards."""
+"""Minigame rewards.
+
+The client reports how many gems it won and the server cannot verify a minigame, so the
+reward is bounded instead: a few gems, at most once per cooldown.
+"""
 import logging
+import time
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
+from pydantic import BaseModel, ConfigDict, Field
 
+from dragon_city import storage
+from dragon_city.api import parse_body
+from dragon_city.auth.context import current_user, login_required
 from dragon_city.enums import Resource
-from dragon_city.storage import load_player, save_player
+from dragon_city.errors import ApiError, not_found
 
 logger = logging.getLogger(__name__)
 
 bp = Blueprint("minigames", __name__)
 
 MAX_GEMS_PER_GAME = 3
+COOLDOWN_SECONDS = 60
 
 
-@bp.route("/minigame/reward", methods=["POST"])
+class RewardBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    gems: int = Field(ge=0, le=MAX_GEMS_PER_GAME)
+
+
+@bp.post("/minigame/reward")
+@login_required
 def minigame_reward():
-    try:
-        data = request.get_json(force=True)
+    body = parse_body(RewardBody)
+    player_id = current_user().id
 
-        user_id = data.get("user_id")
-        gems = int(data.get("gems", 0))
+    if body.gems == 0:
+        return jsonify({"status": "ok", "gems_earned": 0, "new_cash": None})
 
-        if not user_id:
-            return jsonify({"status": "error", "msg": "user_id is required"}), 400
-        if gems < 0 or gems > MAX_GEMS_PER_GAME:
-            return jsonify({"status": "error", "msg": "Gem amount out of range"}), 400
+    now = int(time.time())
+    with storage.player_lock(player_id):
+        if now - storage.get_last_minigame_ts(player_id) < COOLDOWN_SECONDS:
+            raise ApiError(429, "too_many_requests", "Wait a moment before playing again")
 
-        if gems == 0:
-            return jsonify({"status": "ok", "gems_earned": 0, "new_cash": None})
-
-        player_data = load_player(user_id)
-        if "playerInfo" not in player_data:
-            return jsonify({"status": "error", "msg": "Player not found"}), 404
+        player_data = storage.load_player(player_id)
+        if player_data is None:
+            raise not_found("Player not found")
 
         current_cash = player_data["playerInfo"].get(Resource.CASH, 0)
-        new_cash = current_cash + gems
+        new_cash = current_cash + body.gems
         player_data["playerInfo"][Resource.CASH] = new_cash
 
-        save_player(player_data, user_id)
+        storage.save_player(player_data, player_id)
+        storage.set_last_minigame_ts(player_id, now)
 
-        logger.info("Minigame: player %s earned %s gem(s) | %s -> %s", user_id, gems, current_cash, new_cash)
-
-        return jsonify({"status": "ok", "gems_earned": gems, "new_cash": new_cash})
-
-    except Exception as e:
-        logger.exception("Error in /minigame/reward")
-        return jsonify({"status": "error", "msg": str(e)}), 500
+    logger.info("Minigame: player %s earned %s gem(s) | %s -> %s", player_id, body.gems, current_cash, new_cash)
+    return jsonify({"status": "ok", "gems_earned": body.gems, "new_cash": new_cash})

@@ -1,13 +1,11 @@
 """Achievement-points market: rotating offers paid with achievement points."""
-import json
 import logging
 import random
 import time
-from pathlib import Path
 from typing import Any, Dict, List, Set
 
+from dragon_city import storage
 from dragon_city.enums import GroupType, OfferType
-from dragon_city.storage import load_game_config, user_dir
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +33,6 @@ ATTRIBUTE_SURCHARGE = {
     "pu": 2000,
     "l": 4000,
 }
-
-
-def market_path(user_id: Any) -> Path:
-    return user_dir(user_id) / "market_data.json"
 
 
 def ensure_private_state(player_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -101,12 +95,11 @@ def _roll_dragon_offer(dragon_pool: List[Dict[str, Any]], already_chosen_ids: Se
 
 
 def save_market(user_id: Any, market_data: Dict[str, Any]) -> None:
-    with open(market_path(user_id), "w", encoding="utf-8") as f:
-        json.dump(market_data, f, indent=2, ensure_ascii=False)
+    storage.save_market(user_id, market_data)
 
 
 def generate_market_offers(user_id: Any) -> Dict[str, Any]:
-    config_data = load_game_config(user_id)
+    config_data = storage.load_base_config()
     dragon_pool = _build_dragon_pool(config_data)
 
     dragon_offers = []
@@ -136,7 +129,6 @@ def generate_market_offers(user_id: Any) -> Dict[str, Any]:
         "offers": offers,
     }
 
-    user_dir(user_id).mkdir(parents=True, exist_ok=True)
     save_market(user_id, market_data)
     logger.info("Generated %s market offers for player %s", len(offers), user_id)
 
@@ -144,13 +136,10 @@ def generate_market_offers(user_id: Any) -> Dict[str, Any]:
 
 
 def load_or_create_market(user_id: Any) -> Dict[str, Any]:
-    path = market_path(user_id)
+    market_data = storage.get_market(user_id)
 
-    if not path.exists():
+    if not market_data:
         return generate_market_offers(user_id)
-
-    with open(path, "r", encoding="utf-8") as f:
-        market_data = json.load(f)
 
     if int(time.time()) >= market_data.get("next_refresh_at", 0):
         return generate_market_offers(user_id)

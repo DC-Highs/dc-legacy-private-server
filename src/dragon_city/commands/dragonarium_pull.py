@@ -1,37 +1,37 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
-from dragon_city.enums import Command
+from dragon_city.commands.validation import reject
+from dragon_city.enums import Command, GroupType
+from dragon_city.game.dragonarium import ensure_tabs
+from dragon_city.game.items import get_item_config
 
 logger = logging.getLogger(__name__)
 
 
 @command(Command.DRAGONARIUM_PULL)
 def handle(ctx: CommandContext) -> None:
-    category_index = int(ctx.args[1])
-    dragon_index = int(ctx.args[2])
-    target_habitat_id = int(ctx.args[3])
+    category_index = ctx.int_arg(1, "tab", 0, 1000)
+    dragon_index = ctx.int_arg(2, "position", 0, 100000)
+    target_habitat_id = ctx.int_arg(3, "habitat", 1)
 
-    dragonarium = ctx.player_data.get("privateState", {}).get("dragonarium", [])
+    habitat = ctx.map_item(str(target_habitat_id))
+    habitat_cfg = get_item_config(ctx.game_config, habitat[0])
+    if not habitat_cfg or habitat_cfg.get("group_type") != GroupType.HABITAT:
+        reject(f"object {target_habitat_id} is not a habitat")
 
-    if not 0 <= category_index < len(dragonarium):
-        logger.warning("Tab index %s does not exist in the dragonarium", category_index)
-        return
+    dragonarium = ensure_tabs(ctx.private_state)
+
+    if category_index >= len(dragonarium):
+        reject(f"tab index {category_index} does not exist in the dragonarium")
 
     tab_dragons = dragonarium[category_index]
 
-    if not 0 <= dragon_index < len(tab_dragons):
-        logger.warning("Dragon index %s is out of range for tab %s", dragon_index, category_index)
-        return
+    if dragon_index >= len(tab_dragons):
+        reject(f"dragon index {dragon_index} is out of range for tab {category_index}")
 
     dragon_to_move = tab_dragons.pop(dragon_index)
     dragon_to_move["habitatId"] = target_habitat_id
-
-    if "map" not in ctx.player_data:
-        ctx.player_data["map"] = {}
-    if "dragons" not in ctx.map:
-        ctx.map["dragons"] = []
-
     ctx.map["dragons"].append(dragon_to_move)
 
     logger.info(

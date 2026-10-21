@@ -2,6 +2,7 @@ import logging
 import time
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, Resource
 
 logger = logging.getLogger(__name__)
@@ -12,13 +13,15 @@ RETRY_REWARD = "retry"
 @command(Command.DEUS_CARDS_CLAIM)
 def handle(ctx: CommandContext) -> None:
     current_time = int(time.time())
-    prize_id = ctx.private_state.get("deus_cards", {}).get("pending_prize", 0)
+    deus_cards = ctx.private_state.get("deus_cards")
+    prize_id = deus_cards.get("pending_prize") if isinstance(deus_cards, dict) else None
 
-    prize_cfg = None
-    for prize in ctx.game_config.get("dragon_card_prizes", []):
-        if prize.get("id") == prize_id:
-            prize_cfg = prize
-            break
+    # The prize comes from a draw the server generated and is claimed only once.
+    if prize_id is None:
+        reject("there is no pending card prize to claim")
+
+    prize_cfg = next((p for p in ctx.game_config.get("dragon_card_prizes", []) if p.get("id") == prize_id), None)
+    deus_cards["pending_prize"] = None
 
     if prize_cfg:
         reward = prize_cfg.get("reward", {})
@@ -39,9 +42,8 @@ def handle(ctx: CommandContext) -> None:
             logger.info("Prize claimed: dragon %s", reward)
 
         elif reward == RETRY_REWARD:
+            ctx.private_state["deusFreeRetry"] = True
             logger.info("Prize: retry (free extra draw)")
-
-    if "deus_cards" in ctx.private_state:
-        ctx.private_state["deus_cards"]["pending_prize"] = None
+            return
 
     ctx.private_state["deusCardsLastTimestamp"] = current_time

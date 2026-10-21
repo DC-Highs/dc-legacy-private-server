@@ -1,28 +1,36 @@
 import json
 import logging
 
+from dragon_city import storage
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import check_json_depth, reject
 from dragon_city.enums import Command
-from dragon_city.storage import load_player, save_player
 
 logger = logging.getLogger(__name__)
+
+MAX_CLICKS_PER_ASSIST = 50
 
 
 @command(Command.ASSIST_NEIGHBOR)
 def handle(ctx: CommandContext) -> None:
-    target_player_id = str(ctx.args[0])
-    clicks = json.loads(ctx.args[1])
+    target_id = ctx.int_arg(0, "neighbor id", 1)
+    raw_clicks = ctx.text_arg(1, "clicks", 256, allow_empty=True)
 
-    victim_data = load_player(target_player_id)
+    if target_id == ctx.user_id:
+        reject("a player cannot assist themselves")
+    if not storage.player_exists(target_id):
+        reject(f"neighbor {target_id} does not exist")
 
-    victim_data.setdefault("map", {})
-    if not isinstance(victim_data["map"].get("receivedAssists"), dict):
-        victim_data["map"]["receivedAssists"] = {}
+    try:
+        clicks = json.loads(raw_clicks, parse_constant=lambda _c: reject("clicks has an invalid number"))
+    except ValueError:
+        reject("clicks is not valid JSON")
+    if not isinstance(clicks, list) or not clicks or len(clicks) > MAX_CLICKS_PER_ASSIST:
+        reject(f"clicks must be a list of 1 to {MAX_CLICKS_PER_ASSIST} entries")
+    check_json_depth(clicks, "clicks", max_depth=2, max_items=MAX_CLICKS_PER_ASSIST * 4)
 
-    key = "u" + str(ctx.user_id)
-    victim_data["map"]["receivedAssists"].setdefault(key, [])
-    victim_data["map"]["receivedAssists"][key].extend(clicks)
+    # The neighbour may be playing right now, so the assist is queued and merged into their
+    # save the next time they load it, instead of rewriting their save from here.
+    storage.add_pending_assist(target_id, ctx.user_id, clicks)
 
-    save_player(victim_data, target_player_id)
-
-    logger.info("Helped neighbor %s", victim_data["playerInfo"]["name"])
+    logger.info("Helped neighbor %s", target_id)

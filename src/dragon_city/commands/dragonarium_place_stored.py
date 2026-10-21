@@ -2,38 +2,35 @@ import logging
 import time
 
 from dragon_city.commands.base import CommandContext, command
-from dragon_city.enums import Command
-from dragon_city.game.dragonarium import tab_for_attributes
-from dragon_city.game.inventory import register_owned_dragon, remove_stored_dragon
-from dragon_city.game.items import get_item_config
+from dragon_city.commands.validation import reject
+from dragon_city.enums import Command, GroupType
+from dragon_city.game.dragonarium import has_free_slot, tab_for_attributes
+from dragon_city.game.inventory import register_owned_dragon, take_stored_dragon
 
 logger = logging.getLogger(__name__)
 
 
 @command(Command.DRAGONARIUM_PLACE_STORED)
 def handle(ctx: CommandContext) -> None:
-    dragon_name = ctx.args[0]
-    dragon_type_id = int(ctx.args[1])
-    dragon_lvl = int(ctx.args[2])
-    is_gift = int(ctx.args[3])
+    dragon_name = ctx.text_arg(0, "dragon name")
+    dragon_type_id = ctx.int_arg(1, "dragon type", 1)
+    claimed_level = ctx.int_arg(2, "dragon level", 0, 100)
+    is_gift = ctx.flag_arg(3, "is gift")
 
-    dragon_uid = int(time.time() * 1000)
-    dragon_xp = 4 * dragon_lvl - 4
-
-    item_cfg = get_item_config(ctx.game_config, dragon_type_id)
-    if not item_cfg:
-        logger.error("Dragon %s does not exist in the game config, request discarded", dragon_type_id)
-        return
-
-    removed, list_name = remove_stored_dragon(ctx.player_data, dragon_type_id, is_gift == 1)
-
-    if removed:
-        logger.info("Consumed dragon type %s (%s) from %s", dragon_type_id, dragon_name, list_name)
-    else:
-        logger.warning("Dragon type %s not found in '%s', forcing its creation", dragon_type_id, list_name)
+    item_cfg = ctx.item_config(dragon_type_id)
+    if item_cfg.get("group_type") != GroupType.DRAGON:
+        reject(f"item {dragon_type_id} is not a dragon")
 
     tab = tab_for_attributes(item_cfg.get("attributes", []))
+    if not has_free_slot(ctx.private_state, tab):
+        reject(f"the dragonarium tab {tab.name} is full")
 
+    dragon_lvl, list_name = take_stored_dragon(ctx.player_data, dragon_type_id, claimed_level, is_gift == 1)
+    if dragon_lvl is None:
+        reject(f"dragon type {dragon_type_id} (level {claimed_level}) is not in {list_name}")
+    dragon_xp = 4 * dragon_lvl - 4
+
+    dragon_uid = int(time.time() * 1000)
     ctx.private_state["dragonarium"][tab].append({
         "id": dragon_uid,
         "type": dragon_type_id,

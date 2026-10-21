@@ -15,12 +15,9 @@ def _find_item_config(all_items, type_id: str):
 
 @command(Command.UPGRADE)
 def handle(ctx: CommandContext) -> None:
-    unique_id = str(ctx.args[0])
+    unique_id = ctx.iso_arg(0)
 
-    if unique_id not in ctx.map["items"]:
-        return
-
-    item_data = ctx.map["items"][unique_id]
+    item_data = ctx.map_item(unique_id)
     current_type_id = str(item_data[0])
 
     all_items = ctx.game_config.get("items", {})

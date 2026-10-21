@@ -1,8 +1,9 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, Resource
-from dragon_city.game.breeding import FALLBACK_DRAGON_ID, build_dragon_db, get_breed_result
+from dragon_city.game.breeding import build_dragon_db, get_breed_result
 
 logger = logging.getLogger(__name__)
 
@@ -12,10 +13,16 @@ DEFAULT_BOOST_COST = 5
 
 @command(Command.BREED_DRAGON)
 def handle(ctx: CommandContext) -> None:
-    iso_id = str(ctx.args[0])
-    parent1_id = int(ctx.args[1])
-    parent2_id = int(ctx.args[2])
-    use_gems = int(ctx.args[3])
+    iso_id = ctx.iso_arg(0, "breeding cave")
+    parent1_id = ctx.uid_arg(1, "first parent")
+    parent2_id = ctx.uid_arg(2, "second parent")
+    use_gems = ctx.flag_arg(3, "use gems")
+
+    ctx.map_item(iso_id)
+    if parent1_id == parent2_id:
+        reject("a dragon cannot breed with itself")
+    parent1 = ctx.find_dragon(parent1_id)
+    parent2 = ctx.find_dragon(parent2_id)
 
     current_ts = ctx.server_ts
     info = ctx.info
@@ -29,38 +36,20 @@ def handle(ctx: CommandContext) -> None:
         else:
             logger.warning("Not enough gems for the rarity boost")
 
-    dragon1_type = None
-    dragon2_type = None
-    dragon1_level = 1
-    dragon2_level = 1
-
-    for dragon in ctx.player_data.get("map", {}).get("dragons", []):
-        if dragon.get("id") == parent1_id:
-            dragon1_type = dragon.get("type")
-            dragon1_level = (dragon.get("xp", 0) // 4) + 1
-        elif dragon.get("id") == parent2_id:
-            dragon2_type = dragon.get("type")
-            dragon2_level = (dragon.get("xp", 0) // 4) + 1
+    dragon1_type = parent1.get("type")
+    dragon2_type = parent2.get("type")
+    dragon1_level = (parent1.get("xp", 0) // 4) + 1
+    dragon2_level = (parent2.get("xp", 0) // 4) + 1
 
     dragon_db = build_dragon_db(ctx.game_config)
-
-    if dragon1_type and dragon2_type:
-        outcome_id = get_breed_result(dragon1_type, dragon2_type, dragon1_level, dragon2_level, dragon_db, boosted)
-    else:
-        logger.warning("Parents %s or %s not found on the map, falling back to Terra", parent1_id, parent2_id)
-        outcome_id = FALLBACK_DRAGON_ID
+    outcome_id = get_breed_result(dragon1_type, dragon2_type, dragon1_level, dragon2_level, dragon_db, boosted)
 
     duration = DEFAULT_BREEDING_SECONDS
     if outcome_id in dragon_db:
         duration = dragon_db[outcome_id]["breeding_time"]
 
-    if "work" not in ctx.map:
-        ctx.map["work"] = {}
-
     ctx.map["work"][iso_id] = [parent1_id, parent2_id, current_ts, duration, outcome_id]
-
-    if iso_id in ctx.map.get("items", {}):
-        ctx.map["items"][iso_id][3] = current_ts
+    ctx.map["items"][iso_id][3] = current_ts
 
     logger.info(
         "Breeding in cave %s | parent types (%s, %s) | result %s (%s) | boosted=%s",

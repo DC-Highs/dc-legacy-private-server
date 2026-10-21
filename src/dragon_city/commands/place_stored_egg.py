@@ -3,8 +3,8 @@ import random
 import time
 
 from dragon_city.commands.base import CommandContext, command
-from dragon_city.enums import Command
-from dragon_city.game.items import get_item_config
+from dragon_city.commands.validation import reject
+from dragon_city.enums import Command, GroupType
 from dragon_city.names import DRAGON_NAMES
 
 logger = logging.getLogger(__name__)
@@ -12,14 +12,13 @@ logger = logging.getLogger(__name__)
 
 @command(Command.PLACE_STORED_EGG)
 def handle(ctx: CommandContext) -> None:
-    egg_uid = ctx.args[0]
-    dragon_id = ctx.args[1]
-    is_gift = int(ctx.args[2])
+    egg_uid = ctx.new_uid(0, "egg uid")
+    dragon_id = ctx.int_arg(1, "dragon id", 1)
+    is_gift = ctx.flag_arg(2, "is gift")
 
-    item_cfg = get_item_config(ctx.game_config, dragon_id)
-    if not item_cfg:
-        logger.warning("Dragon %s does not exist in the game config", dragon_id)
-        return
+    item_cfg = ctx.item_config(dragon_id)
+    if item_cfg.get("group_type") != GroupType.DRAGON:
+        reject(f"item {dragon_id} is not a dragon")
 
     removed = False
     list_name = ""
@@ -27,7 +26,7 @@ def handle(ctx: CommandContext) -> None:
     if is_gift == 1:
         # Kept as in the original: 'giftsi' looks like a typo for 'gifts', so this
         # branch never finds a gift egg.
-        if "privateState" in ctx.player_data and "giftsi" in ctx.private_state:
+        if "giftsi" in ctx.private_state:
             gifts_list = ctx.private_state["gifts"]
             list_name = "gifts"
 
@@ -37,31 +36,26 @@ def handle(ctx: CommandContext) -> None:
                     removed = True
                     break
     else:
-        if "store" in ctx.player_data.get("map", {}):
-            if "dragons" in ctx.map["store"]:
-                store_dragons = ctx.map["store"]["dragons"]
-                for i, d in enumerate(store_dragons):
-                    if d.get("iid") == dragon_id:
-                        store_dragons.pop(i)
-                        removed = True
-                        list_name = "store -> dragons"
-                        break
+        store = ctx.map["store"]
+        for i, d in enumerate(store["dragons"]):
+            if d.get("iid") == dragon_id:
+                store["dragons"].pop(i)
+                removed = True
+                list_name = "store -> dragons"
+                break
 
-            if not removed and "items" in ctx.map["store"]:
-                store_items = ctx.map["store"]["items"]
-                str_dragon_id = str(dragon_id)
-
-                if str_dragon_id in store_items:
-                    if store_items[str_dragon_id] > 1:
-                        store_items[str_dragon_id] -= 1
-                    else:
-                        del store_items[str_dragon_id]
-                    removed = True
-                    list_name = "store -> items"
+        if not removed:
+            str_dragon_id = str(dragon_id)
+            if str_dragon_id in store["items"]:
+                if store["items"][str_dragon_id] > 1:
+                    store["items"][str_dragon_id] -= 1
+                else:
+                    del store["items"][str_dragon_id]
+                removed = True
+                list_name = "store -> items"
 
     if not removed:
-        logger.warning("Egg %s not found in the warehouse, aborting incubation to avoid duplicates", dragon_id)
-        return
+        reject(f"egg {dragon_id} not found in the warehouse")
 
     logger.info("Removed egg of %s from %s", item_cfg.get("name", dragon_id), list_name)
 

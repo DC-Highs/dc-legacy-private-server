@@ -17,11 +17,7 @@ def handle(ctx: CommandContext) -> None:
     cooldown_hours = globals_config.get("TOURNAMENT_COOLDOWN", {}).get("value", DEFAULT_COOLDOWN_HOURS)
     cooldown_seconds = cooldown_hours * 3600
 
-    if ctx.info[Resource.CASH] < speed_up_price:
-        logger.warning("Not enough gems to speed up the tournament")
-        return
-
-    ctx.info[Resource.CASH] -= speed_up_price
+    ctx.pay(cash=speed_up_price)
 
     current_end_ts = ctx.private_state.get("beginTournamentTs", 0)
     new_ts = max(0, current_end_ts - cooldown_seconds)

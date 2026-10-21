@@ -3,8 +3,8 @@ import random
 import time
 
 from dragon_city.commands.base import CommandContext, command
-from dragon_city.enums import Command, Resource
-from dragon_city.game.items import get_item_config
+from dragon_city.commands.validation import reject
+from dragon_city.enums import Command, GroupType, Resource
 from dragon_city.names import DRAGON_NAMES
 
 logger = logging.getLogger(__name__)
@@ -12,28 +12,21 @@ logger = logging.getLogger(__name__)
 
 @command(Command.BUY_EGG)
 def handle(ctx: CommandContext) -> None:
-    egg_uid = ctx.args[0]
-    dragon_id = ctx.args[1]
+    egg_uid = ctx.new_uid(0, "egg uid")
+    dragon_id = ctx.int_arg(1, "dragon id", 1)
 
-    item_cfg = get_item_config(ctx.game_config, dragon_id)
-    if not item_cfg:
-        logger.warning("Dragon %s does not exist in the game config", dragon_id)
-        return
+    item_cfg = ctx.item_config(dragon_id)
+    costs = item_cfg.get("costs")
+
+    if item_cfg.get("group_type") != GroupType.DRAGON:
+        reject(f"item {dragon_id} is not a dragon")
+    if not costs:
+        reject(f"dragon {dragon_id} is not for sale")
+
+    ctx.pay(gold=costs.get("g", 0), cash=costs.get("c", 0), food=costs.get("f", 0))
 
     info = ctx.info
-    costs = item_cfg.get("costs", {})
-    gold_cost = costs.get("g", 0)
-    cash_cost = costs.get("c", 0)
-
-    if gold_cost > 0:
-        info[Resource.GOLD] = max(0, info[Resource.GOLD] - gold_cost)
-    if cash_cost > 0:
-        info[Resource.CASH] = max(0, info[Resource.CASH] - cash_cost)
-
     info[Resource.XP] += item_cfg.get("xp", 0)
-
-    if "eggs" not in ctx.map:
-        ctx.map["eggs"] = []
 
     ctx.map["eggs"].append({
         "id": egg_uid,

@@ -1,18 +1,54 @@
-"""PvP opponent generation."""
+"""PvP opponents (stored in MongoDB) and their generation."""
 import json
 import logging
 import random
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from dragon_city.config import SRV_DIR
+from dragon_city.config import PVP_PAGE_SIZE, get_settings
+from dragon_city.db.mongo import PVP_ISLE, PVP_PLAYERS, get_db
 from dragon_city.enums import GroupType
 from dragon_city.names import DRAGON_NAMES, FIRST_NAMES, LAST_NAMES
-from dragon_city.storage import PVP_ISLE_FILE, PVP_PLAYERS_FILE, load_game_config
+from dragon_city.storage import load_base_config
 
 logger = logging.getLogger(__name__)
 
+PVP_ISLE_FILE = "get_pvp_isle.json"
+PVP_PLAYERS_FILE = "pvp_players_info.json"
 OPPONENTS_PER_BATCH = 8
 OPPONENT_PICTURE = "http://graph.facebook.com/1000000000000/picture?type=square"
+
+
+def seed_pvp_data() -> None:
+    """Import the bundled opponents the first time the database is empty."""
+    db = get_db()
+    if db[PVP_ISLE].count_documents({}, limit=1):
+        return
+
+    seed_dir = get_settings().seed_dir
+    isle_path, players_path = seed_dir / PVP_ISLE_FILE, seed_dir / PVP_PLAYERS_FILE
+    if not isle_path.exists() or not players_path.exists():
+        logger.warning("PvP seed files not found in %s, the PvP isle will be empty", seed_dir)
+        return
+
+    isle = json.loads(isle_path.read_text(encoding="utf-8"))
+    players = json.loads(players_path.read_text(encoding="utf-8"))
+
+    if isle:
+        db[PVP_ISLE].insert_many({"_id": str(e["id"]), "order": i, "entry": e} for i, e in enumerate(isle))
+    if players:
+        db[PVP_PLAYERS].insert_many({"_id": str(pid), "data": data} for pid, data in players.items())
+    logger.info("Seeded %s PvP opponents", len(isle))
+
+
+def pvp_page(level: int) -> List[Dict[str, Any]]:
+    start = max(0, (level - 1) * PVP_PAGE_SIZE)
+    docs = get_db()[PVP_ISLE].find().sort("order", 1).skip(start).limit(PVP_PAGE_SIZE)
+    return [d["entry"] for d in docs]
+
+
+def get_pvp_player(opponent_id: str) -> Optional[Dict[str, Any]]:
+    doc = get_db()[PVP_PLAYERS].find_one({"_id": str(opponent_id)})
+    return doc["data"] if doc else None
 
 
 def build_dragon_pool(config_data: Dict[str, Any]) -> Dict[int, List[int]]:
@@ -49,20 +85,14 @@ def roll_team_size() -> int:
 
 
 def generate_pvp_opponents() -> int:
-    """Append a batch of random opponents to the PvP files and return the new total."""
-    pvp_isle_path = SRV_DIR / PVP_ISLE_FILE
-    pvp_players_path = SRV_DIR / PVP_PLAYERS_FILE
+    """Append a batch of random opponents and return the new total."""
+    db = get_db()
+    dragon_pool = build_dragon_pool(load_base_config())
 
-    with open(pvp_isle_path, "r", encoding="utf-8") as f:
-        pvp_isle = json.load(f)
-    with open(pvp_players_path, "r", encoding="utf-8") as f:
-        pvp_players = json.load(f)
-
-    config_data = load_game_config()
-    dragon_pool = build_dragon_pool(config_data)
-
-    last_id = max(int(p["id"]) for p in pvp_isle)
-    last_island = max(p.get("islandNumber", 1) for p in pvp_isle)
+    entries = [d["entry"] for d in db[PVP_ISLE].find({}, {"entry.id": 1, "entry.islandNumber": 1, "order": 1})]
+    last_id = max((int(e["id"]) for e in entries), default=100000000)
+    last_island = max((e.get("islandNumber", 1) for e in entries), default=1)
+    next_order = db[PVP_ISLE].count_documents({})
 
     for i in range(1, OPPONENTS_PER_BATCH + 1):
         new_id = str(last_id + i)
@@ -79,21 +109,19 @@ def generate_pvp_opponents() -> int:
         else:
             pvp_isle_val = 3
 
-        pvp_isle.append({
+        entry = {
             "id": new_id, "name": name, "level": lvl,
             "pvplevel": pvp_lvl, "pvpIsle": pvp_isle_val,
             "islandNumber": last_island + (i % 2),
             "pic": OPPONENT_PICTURE,
-        })
+        }
 
         team_size = roll_team_size()
         dragons = []
         team_pvp = []
-
         for d_idx in range(1, team_size + 1):
-            d_type = get_dragon_type_for_level(lvl, dragon_pool)
             dragons.append({
-                "id": d_idx, "type": d_type,
+                "id": d_idx, "type": get_dragon_type_for_level(lvl, dragon_pool),
                 "xp": random.randint(16, 156),
                 "habitatId": 0,
                 "name": random.choice(DRAGON_NAMES),
@@ -101,17 +129,13 @@ def generate_pvp_opponents() -> int:
             })
             team_pvp.append({"id": d_idx})
 
-        pvp_players[new_id] = {
-            "map": {"dragons": dragons},
-            "privateState": {"teams": {"pvp": team_pvp}},
-        }
-
+        db[PVP_ISLE].insert_one({"_id": new_id, "order": next_order + i - 1, "entry": entry})
+        db[PVP_PLAYERS].insert_one({
+            "_id": new_id,
+            "data": {"map": {"dragons": dragons}, "privateState": {"teams": {"pvp": team_pvp}}},
+        })
         logger.info("Generated PvP opponent %s (id=%s, level=%s, dragons=%s)", name, new_id, lvl, team_size)
 
-    with open(pvp_isle_path, "w", encoding="utf-8") as f:
-        json.dump(pvp_isle, f, indent=2)
-    with open(pvp_players_path, "w", encoding="utf-8") as f:
-        json.dump(pvp_players, f, indent=2)
-
-    logger.info("PvP data updated, total opponents: %s", len(pvp_isle))
-    return len(pvp_isle)
+    total = db[PVP_ISLE].count_documents({})
+    logger.info("PvP data updated, total opponents: %s", total)
+    return total

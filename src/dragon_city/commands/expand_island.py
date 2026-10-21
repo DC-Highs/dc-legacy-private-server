@@ -1,41 +1,33 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, Resource
 
 logger = logging.getLogger(__name__)
 
+MAX_EXPANSION_ID = 9999
+
 
 @command(Command.EXPAND_ISLAND)
 def handle(ctx: CommandContext) -> None:
-    expansion_id = int(ctx.args[0])
-    cost_index = int(ctx.args[1])
+    expansion_id = ctx.int_arg(0, "expansion id", 0, MAX_EXPANSION_ID)
+    cost_index = ctx.int_arg(1, "cost index", 0, 1000)
 
-    if "expansions" not in ctx.map:
-        ctx.map["expansions"] = []
+    expansions = ctx.map.setdefault("expansions", [])
+    if expansion_id in expansions:
+        reject(f"expansion {expansion_id} was already purchased")
 
-    if expansion_id not in ctx.map["expansions"]:
-        ctx.map["expansions"].append(expansion_id)
+    islands_costs = ctx.game_config.get("globals", {}).get("ISLANDS_COSTS", {}).get("value", [])
+    if cost_index >= len(islands_costs):
+        reject(f"cost index {cost_index} exceeds the ISLANDS_COSTS limit")
 
-    try:
-        islands_costs = ctx.game_config.get("globals", {}).get("ISLANDS_COSTS", {}).get("value", [])
+    cost_item = islands_costs[cost_index]
+    cost_obj = cost_item.get("value", cost_item) if isinstance(cost_item, dict) else {}
 
-        if cost_index >= len(islands_costs):
-            logger.warning("Cost index %s exceeds the ISLANDS_COSTS limit", cost_index)
-            return
+    ctx.pay(gold=int(cost_obj.get("g", 0)), cash=int(cost_obj.get("c", 0)))
+    expansions.append(expansion_id)
 
-        cost_item = islands_costs[cost_index]
-        cost_obj = cost_item.get("value", cost_item) if isinstance(cost_item, dict) else {}
-
-        for res_type, amount in cost_obj.items():
-            amt = int(amount)
-            if res_type == "g":
-                ctx.info[Resource.GOLD] = max(0, ctx.info[Resource.GOLD] - amt)
-            elif res_type == "c":
-                ctx.info[Resource.CASH] = max(0, ctx.info[Resource.CASH] - amt)
-
-        logger.info("Island expanded to plot %s", expansion_id)
-        logger.info("Cost charged (index %s): %s", cost_index, cost_obj)
-
-    except Exception:
-        logger.exception("Failed to charge the cost of expand_island")
+    logger.info("Island expanded to plot %s", expansion_id)
+    logger.info("Cost charged (index %s): %s", cost_index, cost_obj)
+    logger.debug("Gold %s | gems %s", ctx.info[Resource.GOLD], ctx.info[Resource.CASH])

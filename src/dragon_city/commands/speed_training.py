@@ -3,50 +3,37 @@ import math
 import time
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, Resource
-from dragon_city.game.training import teach_attack
+from dragon_city.game.training import teach_attack, training_time
 
 logger = logging.getLogger(__name__)
 
 
 @command(Command.SPEED_TRAINING)
 def handle(ctx: CommandContext) -> None:
-    building_uid = str(ctx.args[0])
+    building_uid = ctx.iso_arg(0, "training building")
 
-    work = ctx.map.get("work", {})
+    work = ctx.map["work"]
     if building_uid not in work:
-        logger.warning("Building %s is not training (not found in 'work')", building_uid)
-        return
-
+        reject(f"building {building_uid} is not training")
     work_data = work[building_uid]
 
+    dragon = ctx.find_dragon(work_data[0])
+    attack_id = int(work_data[1])
+    attack_pos = int(work_data[3])
     start_ts = int(work_data[2])
     current_ts = int(time.time())
 
-    dragon_uid = str(work_data[0])
-    attack_id = int(work_data[1])
-    attack_pos = int(work_data[3])
-
-    attacks_db = ctx.game_config.get("attacks", {})
-    training_time = 0
-
-    if attack_id in attacks_db:
-        training_time = attacks_db[attack_id].get("training_time", 0)
-
-    time_left = max(0, training_time - (current_ts - start_ts))
+    total_time = training_time(ctx.game_config, attack_id)
+    time_left = max(0, total_time - (current_ts - start_ts))
     speed_up_cost = max(1, math.ceil(time_left / 3600.0))
 
-    if ctx.info[Resource.CASH] >= speed_up_cost:
-        ctx.info[Resource.CASH] -= speed_up_cost
-        work[building_uid][2] = current_ts - training_time - 10
+    ctx.pay(cash=speed_up_cost)
 
-        logger.info("Training sped up, cost: %s gems", speed_up_cost)
-        logger.info("Remaining gems: %s", ctx.info[Resource.CASH])
-    else:
-        logger.warning("Not enough gems to speed up the training")
+    logger.info("Training sped up, cost: %s gems", speed_up_cost)
+    logger.info("Remaining gems: %s", ctx.info[Resource.CASH])
 
-    if teach_attack(ctx.player_data, dragon_uid, attack_id, attack_pos):
-        del work[building_uid]
-        logger.info("Training finished, work queue cleared in building %s", building_uid)
-    else:
-        logger.warning("Dragon %s not found on the map to teach it the attack", dragon_uid)
+    teach_attack(dragon, attack_id, attack_pos)
+    del work[building_uid]
+    logger.info("Training finished, work queue cleared in building %s", building_uid)

@@ -1,21 +1,28 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, Resource
 
 logger = logging.getLogger(__name__)
 
 ACHIEVEMENT_POINTS = 35
+MAX_GOAL_ID = 9999
 
 
 @command(Command.COMPLETE_GOAL)
 def handle(ctx: CommandContext) -> None:
-    goal_id = int(ctx.args[0])
+    goal_id = ctx.int_arg(0, "goal id", 0, MAX_GOAL_ID)
     goal_config = ctx.game_config.get("goals", {}).get(str(goal_id))
 
     if not goal_config:
-        logger.warning("Goal %s does not exist in the game config", goal_id)
-        return
+        reject(f"goal {goal_id} does not exist in the game config")
+
+    # A goal pays out once; the client could otherwise claim it again and again.
+    completed = ctx.private_state.setdefault("completedGoals", [])
+    if goal_id in completed:
+        reject(f"goal {goal_id} was already completed")
+    completed.append(goal_id)
 
     reward = goal_config.get("reward", {})
     gold_reward = reward.get("g", 0)

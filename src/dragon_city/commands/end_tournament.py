@@ -1,22 +1,30 @@
-import json
 import logging
 import time
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, Resource
-from dragon_city.game.combat import apply_kills
+from dragon_city.game.combat import apply_kills, parse_kills_log
 
 logger = logging.getLogger(__name__)
 
 ACHIEVEMENT_POINTS = 50
+MIN_TOURNAMENT_SECONDS = 5
 
 
 @command(Command.END_TOURNAMENT)
 def handle(ctx: CommandContext) -> None:
-    player_won = str(ctx.args[0]) == "1"
-    kills_log = json.loads(ctx.args[1]) if len(ctx.args) > 1 else {}
+    player_won = ctx.flag_arg(0, "won") == 1
+    kills_log = parse_kills_log(ctx.args[1]) if len(ctx.args) > 1 else {}
 
-    ctx.private_state["endTournamentTs"] = int(time.time())
+    # A tournament can only end after it began, and only once.
+    now = int(time.time())
+    begin_ts = int(ctx.private_state.get("beginTournamentTs") or 0)
+    end_ts = int(ctx.private_state.get("endTournamentTs") or 0)
+    if begin_ts <= end_ts or now - begin_ts < MIN_TOURNAMENT_SECONDS:
+        reject("there is no tournament in progress")
+
+    ctx.private_state["endTournamentTs"] = now
 
     logger.info("Tournament ended: %s. Kills: %s", "won" if player_won else "lost", kills_log)
 

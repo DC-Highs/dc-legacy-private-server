@@ -6,30 +6,31 @@ logger = logging.getLogger(__name__)
 
 EMPTY_ATTACK_SLOT = -1
 ATTACK_SLOTS = 4
+DEFAULT_TRAINING_SECONDS = 0
+TRAINING_TOLERANCE_SECONDS = 5
 
 
-def teach_attack(player_data: Dict[str, Any], dragon_uid: str, attack_id: int, attack_pos: int) -> bool:
-    """Teach ``attack_id`` to the dragon in slot ``attack_pos``; returns whether the dragon exists."""
-    for dragon in player_data.get("map", {}).get("dragons", []):
-        if str(dragon.get("id")) != dragon_uid:
-            continue
+def training_time(game_config: Dict[str, Any], attack_id: int) -> int:
+    """Seconds an attack takes to train (the config keys attacks by text ids)."""
+    attack = game_config.get("attacks", {}).get(str(attack_id), {})
+    return int(attack.get("training_time", DEFAULT_TRAINING_SECONDS))
 
-        if "attack" not in dragon or not isinstance(dragon["attack"], list):
-            dragon["attack"] = [EMPTY_ATTACK_SLOT] * ATTACK_SLOTS
 
-        attacks: List[int] = dragon["attack"]
-        while len(attacks) <= attack_pos:
-            attacks.append(EMPTY_ATTACK_SLOT)
+def teach_attack(dragon: Dict[str, Any], attack_id: int, attack_pos: int) -> None:
+    """Teach ``attack_id`` to the dragon in slot ``attack_pos`` (0..ATTACK_SLOTS-1)."""
+    if "attack" not in dragon or not isinstance(dragon["attack"], list):
+        dragon["attack"] = [EMPTY_ATTACK_SLOT] * ATTACK_SLOTS
 
-        old_attack = attacks[attack_pos]
-        attacks[attack_pos] = attack_id
+    attacks: List[int] = dragon["attack"]
+    while len(attacks) <= attack_pos:
+        attacks.append(EMPTY_ATTACK_SLOT)
 
-        dragon["work_id"] = []
+    old_attack = attacks[attack_pos]
+    attacks[attack_pos] = attack_id
 
-        logger.info(
-            "Dragon %s (id=%s) learned attack %s (replacing %s in slot %s)",
-            dragon.get("name", "Unknown"), dragon_uid, attack_id, old_attack, attack_pos,
-        )
-        return True
+    dragon["work_id"] = []
 
-    return False
+    logger.info(
+        "Dragon %s (id=%s) learned attack %s (replacing %s in slot %s)",
+        dragon.get("name", "Unknown"), dragon.get("id"), attack_id, old_attack, attack_pos,
+    )

@@ -1,8 +1,9 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, DragonariumTab, Resource
-from dragon_city.game.dragonarium import ensure_slots
+from dragon_city.game.dragonarium import MAX_SLOTS_PER_TAB, ensure_slots
 
 logger = logging.getLogger(__name__)
 
@@ -12,22 +13,14 @@ SLOT_COSTS = (2, 2, 3, 4, 5)
 
 @command(Command.DRAGONARIUM_ADD)
 def handle(ctx: CommandContext) -> None:
-    slot_index = int(ctx.args[0])
-
-    slot_cost = SLOT_COSTS[slot_index]
-    ctx.info[Resource.CASH] -= slot_cost
-
-    try:
-        slot_name = DragonariumTab(slot_index).name.title()
-    except ValueError:
-        slot_name = f"Unknown ({slot_index})"
+    slot_index = ctx.int_arg(0, "slot", 0, len(SLOT_COSTS) - 1)
+    slot_name = DragonariumTab(slot_index).name.title()
 
     slots = ensure_slots(ctx.private_state)
+    if slots[slot_index] >= MAX_SLOTS_PER_TAB:
+        reject(f"the {slot_name} tab already has the maximum number of slots")
 
-    if not 0 <= slot_index < len(slots):
-        logger.warning("Slot index %s is out of range for the dragonarium", slot_index)
-        return
-
+    ctx.pay(cash=SLOT_COSTS[slot_index])
     slots[slot_index] += 1
 
     logger.info("Added a slot to the %s tab", slot_name)

@@ -8,6 +8,6 @@ logger = logging.getLogger(__name__)
 
 @command(Command.COMPLETE_TUTORIAL)
 def handle(ctx: CommandContext) -> None:
-    ctx.info["completed_tutorial"] = str(ctx.args[0])
+    ctx.info["completed_tutorial"] = str(ctx.int_arg(0, "tutorial step", 0, 1000))
 
     logger.info("Tutorial marked as completed")

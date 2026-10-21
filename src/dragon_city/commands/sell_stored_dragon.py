@@ -1,50 +1,38 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, Resource
-from dragon_city.game.items import get_item_config
 
 logger = logging.getLogger(__name__)
 
 
 @command(Command.SELL_STORED_DRAGON)
 def handle(ctx: CommandContext) -> None:
-    dragon_id = int(ctx.args[0])
-    dragon_lvl = int(ctx.args[1])
-    is_gift = int(ctx.args[2])
+    dragon_id = ctx.int_arg(0, "dragon id", 1)
+    dragon_lvl = ctx.int_arg(1, "dragon level", 0, 100)
+    is_gift = ctx.flag_arg(2, "is gift")
 
-    item_cfg = get_item_config(ctx.game_config, dragon_id)
-    if not item_cfg:
-        logger.warning("Dragon %s does not exist in the game config", dragon_id)
-        return
-
+    item_cfg = ctx.item_config(dragon_id)
     sell_price = item_cfg.get("sell_price", {}).get("g", 0)
 
-    target_list = None
-    list_name = ""
-
     if is_gift == 1:
-        if "privateState" in ctx.player_data and "gifts" in ctx.private_state:
-            target_list = ctx.private_state["gifts"]
-            list_name = "gifts"
+        target_list = ctx.private_state.get("gifts")
+        list_name = "gifts"
     else:
-        if "store" in ctx.player_data.get("map", {}) and "dragons" in ctx.map["store"]:
-            target_list = ctx.map["store"]["dragons"]
-            list_name = "store"
+        target_list = ctx.map["store"]["dragons"]
+        list_name = "store"
 
-    if target_list is None:
-        logger.warning("sell_stored_dragon failed: target list (is_gift=%s) does not exist in the player save", is_gift)
-        return
+    if not isinstance(target_list, list):
+        reject(f"target list (is_gift={is_gift}) does not exist in the player save")
 
-    index_to_remove = -1
-    for i, d in enumerate(target_list):
-        if d.get("iid") == dragon_id and d.get("lvl") == dragon_lvl:
-            index_to_remove = i
-            break
-
+    index_to_remove = next(
+        (i for i, d in enumerate(target_list)
+         if isinstance(d, dict) and d.get("iid") == dragon_id and d.get("lvl") == dragon_lvl),
+        -1,
+    )
     if index_to_remove == -1:
-        logger.warning("sell_stored_dragon failed: dragon %s level %s not found in %s", dragon_id, dragon_lvl, list_name)
-        return
+        reject(f"dragon {dragon_id} level {dragon_lvl} not found in {list_name}")
 
     target_list.pop(index_to_remove)
     ctx.info[Resource.GOLD] += sell_price

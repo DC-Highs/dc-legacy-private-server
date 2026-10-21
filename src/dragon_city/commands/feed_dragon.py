@@ -1,6 +1,7 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, Resource
 
 logger = logging.getLogger(__name__)
@@ -17,46 +18,30 @@ FOOD_COSTS = (
 
 @command(Command.FEED_DRAGON)
 def handle(ctx: CommandContext) -> None:
-    dragon_uid = ctx.args[0]
+    dragon = ctx.find_dragon(ctx.uid_arg(0, "dragon uid"))
 
-    for dragon in ctx.map.get("dragons", []):
-        if str(dragon.get("id")) != str(dragon_uid):
-            continue
+    current_xp = dragon.get("xp", 0)
+    current_level = (current_xp // 4) + 1
 
-        current_xp = dragon.get("xp", 0)
-        current_level = (current_xp // 4) + 1
+    if current_level >= len(FOOD_COSTS):
+        reject(f"dragon {dragon.get('id')} already reached the highest registered level")
 
-        if current_level >= len(FOOD_COSTS):
-            logger.warning("Dragon %s already reached the highest registered level", dragon_uid)
-            return
+    food_cost = FOOD_COSTS[current_level]
+    ctx.pay(food=food_cost)
 
-        food_cost = FOOD_COSTS[current_level]
-        info = ctx.info
+    dragon["xp"] = current_xp + 1
+    new_level = (dragon["xp"] // 4) + 1
 
-        if info[Resource.FOOD] < food_cost:
-            logger.warning("Not enough food (%s required) to feed dragon %s", food_cost, dragon_uid)
-            return
+    dragon_type_str = str(dragon.get("type"))
+    owned = ctx.map["ownedDragons"]
 
-        info[Resource.FOOD] -= food_cost
+    if dragon_type_str not in owned:
+        owned[dragon_type_str] = [1, 0, 0]
 
-        dragon["xp"] = current_xp + 1
-        new_level = (dragon["xp"] // 4) + 1
+    if new_level >= 4:
+        owned[dragon_type_str][1] = 2
+    if new_level >= 7:
+        owned[dragon_type_str][2] = 3
 
-        dragon_type_str = str(dragon.get("type"))
-
-        if "ownedDragons" not in ctx.map:
-            ctx.map["ownedDragons"] = {}
-
-        if dragon_type_str not in ctx.map["ownedDragons"]:
-            ctx.map["ownedDragons"][dragon_type_str] = [1, 0, 0]
-
-        if new_level >= 4:
-            ctx.map["ownedDragons"][dragon_type_str][1] = 2
-        if new_level >= 7:
-            ctx.map["ownedDragons"][dragon_type_str][2] = 3
-
-        logger.info("Fed dragon '%s' (uid %s)", dragon.get("name", "Unknown"), dragon_uid)
-        logger.info("Dragon xp is now %s | cost: %s | remaining food: %s", dragon["xp"], food_cost, info[Resource.FOOD])
-        return
-
-    logger.warning("Dragon with uid %s not found on the map", dragon_uid)
+    logger.info("Fed dragon '%s' (uid %s)", dragon.get("name", "Unknown"), dragon.get("id"))
+    logger.info("Dragon xp is now %s | cost: %s | remaining food: %s", dragon["xp"], food_cost, ctx.info[Resource.FOOD])

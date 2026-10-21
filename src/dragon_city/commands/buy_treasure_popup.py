@@ -1,6 +1,7 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, Resource
 
 logger = logging.getLogger(__name__)
@@ -18,20 +19,14 @@ TREASURES = {
 
 @command(Command.BUY_TREASURE_POPUP)
 def handle(ctx: CommandContext) -> None:
-    treasure_id = int(ctx.args[0])
+    treasure_id = ctx.int_arg(0, "treasure id", 0, 100000)
 
     if treasure_id not in TREASURES:
-        logger.warning("Treasure id %s is not registered on the server", treasure_id)
-        return
+        reject(f"treasure id {treasure_id} is not registered on the server")
 
     resource, amount, price = TREASURES[treasure_id]
-    info = ctx.info
 
-    if info[Resource.CASH] < price:
-        logger.warning("Not enough gems for treasure %s, current gems: %s", treasure_id, info[Resource.CASH])
-        return
-
-    info[Resource.CASH] -= price
-    info[resource] += amount
+    ctx.pay(cash=price)
+    ctx.info[resource] += amount
 
     logger.info("Bought treasure %s: +%s %s for -%s gems", treasure_id, amount, resource.value, price)

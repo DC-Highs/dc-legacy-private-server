@@ -1,32 +1,22 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, Resource
-from dragon_city.game.items import get_item_config
 
 logger = logging.getLogger(__name__)
 
 
 @command(Command.SELL_STORED_ITEM)
 def handle(ctx: CommandContext) -> None:
-    item_id_to_sell = str(ctx.args[0])
-    item_cfg = get_item_config(ctx.game_config, item_id_to_sell)
-
-    if not item_cfg:
-        logger.warning("Object %s does not exist in the game config", item_id_to_sell)
-        return
+    item_id_to_sell = str(ctx.int_arg(0, "item id", 1))
+    item_cfg = ctx.item_config(item_id_to_sell)
 
     sell_price = item_cfg.get("sell_price", {}).get("g", 0)
-
-    if "store" not in ctx.map or "items" not in ctx.map["store"]:
-        logger.warning("sell_stored_item failed: the player has no ['map']['store']['items'] key")
-        return
-
     store_items = ctx.map["store"]["items"]
 
     if item_id_to_sell not in store_items:
-        logger.warning("sell_stored_item failed: the player has no item %s in the warehouse", item_id_to_sell)
-        return
+        reject(f"the player has no item {item_id_to_sell} in the warehouse")
 
     if store_items[item_id_to_sell] > 1:
         store_items[item_id_to_sell] -= 1

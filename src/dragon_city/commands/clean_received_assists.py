@@ -8,10 +8,10 @@ logger = logging.getLogger(__name__)
 
 @command(Command.CLEAN_RECEIVED_ASSISTS)
 def handle(ctx: CommandContext) -> None:
-    helper_pid = str(ctx.args[0])
+    helper_pid = str(ctx.int_arg(0, "helper id", 1))
     key = "u" + helper_pid
 
-    received = ctx.player_data.get("map", {}).get("receivedAssists", {})
+    received = ctx.map.get("receivedAssists", {})
     if isinstance(received, dict) and key in received:
         del received[key]
 

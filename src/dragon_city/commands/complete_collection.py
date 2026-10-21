@@ -1,6 +1,7 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command, Resource
 
 logger = logging.getLogger(__name__)
@@ -10,30 +11,26 @@ ACHIEVEMENT_POINTS = 75
 
 @command(Command.COMPLETE_COLLECTION)
 def handle(ctx: CommandContext) -> None:
-    collection_id = int(ctx.args[0])
+    collection_id = ctx.int_arg(0, "collection id", 0, 100000)
 
-    if "completedCollection" not in ctx.private_state:
-        ctx.private_state["completedCollection"] = []
+    collection = next((c for c in ctx.game_config.get("collections", []) if c.get("id") == collection_id), None)
+    if not collection:
+        reject(f"collection {collection_id} does not exist in the game config")
 
-    completed = ctx.private_state["completedCollection"]
+    completed = ctx.private_state.setdefault("completedCollection", [])
     if collection_id in completed:
-        logger.warning("The player had already completed collection %s", collection_id)
-        return
+        reject(f"the player had already completed collection {collection_id}")
+
+    # The player must own every dragon of the collection (the dragon book tracks that).
+    owned = ctx.map["ownedDragons"]
+    missing = [d for d in collection.get("dragon_ids", []) if str(d) not in owned]
+    if missing:
+        reject(f"collection {collection_id} is incomplete, missing dragons {missing}")
 
     completed.append(collection_id)
 
-    collection_found = None
-    for collection in ctx.game_config.get("collections", []):
-        if collection.get("id") == collection_id:
-            collection_found = collection
-            break
-
-    if not collection_found:
-        logger.warning("Collection %s was registered but does not exist in the game config", collection_id)
-        return
-
-    rewards = collection_found.get("reward", {})
-    col_name = collection_found.get("name", f"Collection {collection_id}")
+    rewards = collection.get("reward", {})
+    col_name = collection.get("name", f"Collection {collection_id}")
 
     gold_reward = rewards.get("g", 0)
     food_reward = rewards.get("f", 0)

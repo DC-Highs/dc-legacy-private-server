@@ -12,45 +12,52 @@ _OWNED_DRAGON_STAGES = (
 
 
 def _find_gifts_node(player_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    if "gifts" in player_data:
-        return player_data["gifts"]
-    if "privateState" in player_data and "gifts" in player_data["privateState"]:
-        return player_data["privateState"]["gifts"]
-    if "map" in player_data and "gifts" in player_data["map"]:
-        return player_data["map"]["gifts"]
+    for container in (player_data, player_data.get("privateState", {}), player_data.get("map", {})):
+        if "gifts" in container:
+            return container["gifts"]
     return None
 
 
-def _pop_matching_dragon(target_list: list, dragon_type_id: int, match_gift_type: bool) -> bool:
-    for i, entry in enumerate(target_list):
-        if isinstance(entry, dict):
-            if entry.get("iid") == dragon_type_id or (match_gift_type and entry.get("type") == dragon_type_id):
-                target_list.pop(i)
-                return True
-        elif isinstance(entry, (str, int)):
-            if str(entry) == str(dragon_type_id):
-                target_list.pop(i)
-                return True
+def _entry_matches(entry: Any, dragon_type_id: int, level: int, is_gift: bool) -> bool:
+    if isinstance(entry, dict):
+        if is_gift:
+            return entry.get("iid") == dragon_type_id or entry.get("type") == dragon_type_id
+        if entry.get("iid") != dragon_type_id:
+            return False
+        stored_level = entry.get("lvl", 0)
+        # Freshly won dragons are stored at level 0 and the client may report 0 or 1 for them.
+        return stored_level == level or (stored_level == 0 and level in (0, 1))
+    if isinstance(entry, (str, int)):
+        return str(entry) == str(dragon_type_id)
     return False
 
 
-def remove_stored_dragon(player_data: Dict[str, Any], dragon_type_id: int, is_gift: bool) -> Tuple[bool, str]:
-    """Take a dragon out of the gifts or the storage; returns (removed, list name)."""
-    removed = False
-    list_name = ""
+def take_stored_dragon(
+    player_data: Dict[str, Any], dragon_type_id: int, level: int, is_gift: bool
+) -> Tuple[Optional[int], str]:
+    """Remove a dragon from the gifts or the storage.
 
+    Returns the level it had (never below 1) or ``None`` when the player does not own
+    it, plus the name of the list that was searched. The caller must use the returned
+    level, never the one the client claims.
+    """
     if is_gift:
         gifts_node = _find_gifts_node(player_data)
-
-        if gifts_node and "dragons" in gifts_node:
-            list_name = "gifts -> dragons"
-            removed = _pop_matching_dragon(gifts_node["dragons"], dragon_type_id, match_gift_type=True)
+        target_list = gifts_node.get("dragons") if isinstance(gifts_node, dict) else None
+        list_name = "gifts -> dragons"
     else:
-        if "store" in player_data.get("map", {}) and "dragons" in player_data["map"]["store"]:
-            list_name = "store -> dragons"
-            removed = _pop_matching_dragon(player_data["map"]["store"]["dragons"], dragon_type_id, match_gift_type=False)
+        target_list = player_data.get("map", {}).get("store", {}).get("dragons")
+        list_name = "store -> dragons"
 
-    return removed, list_name
+    if not isinstance(target_list, list):
+        return None, list_name
+
+    for index, entry in enumerate(target_list):
+        if _entry_matches(entry, dragon_type_id, level, is_gift):
+            target_list.pop(index)
+            stored_level = entry.get("lvl", 0) if isinstance(entry, dict) else 0
+            return max(1, stored_level), list_name
+    return None, list_name
 
 
 def register_owned_dragon(player_data: Dict[str, Any], dragon_type_id: int, dragon_xp: int) -> None:

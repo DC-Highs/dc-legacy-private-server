@@ -2,6 +2,7 @@ import logging
 import random
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command
 from dragon_city.game.black_market import roll_kompu_pool
 
@@ -14,13 +15,12 @@ def handle(ctx: CommandContext) -> None:
     current_opened = private_state.get("kompuBoxesOpened", 0)
     kompu_dragons = private_state.get("kompuBoxesDragons", [])
 
-    if current_opened > 0 and len(kompu_dragons) >= current_opened:
-        prize_dragon_id = kompu_dragons[current_opened - 1]
+    if not (current_opened > 0 and len(kompu_dragons) >= current_opened):
+        reject(f"kompuBoxesOpened is {current_opened}, invalid list to claim from")
 
-        ctx.map["store"]["dragons"].append({"iid": prize_dragon_id, "lvl": 0})
-        logger.info("Dragon %s stored in the warehouse", prize_dragon_id)
-    else:
-        logger.warning("kompuBoxesOpened is %s, invalid list to claim from", current_opened)
+    prize_dragon_id = kompu_dragons[current_opened - 1]
+    ctx.map["store"]["dragons"].append({"iid": prize_dragon_id, "lvl": 0})
+    logger.info("Dragon %s stored in the warehouse", prize_dragon_id)
 
     private_state["kompuBoxesOpened"] = 0
 

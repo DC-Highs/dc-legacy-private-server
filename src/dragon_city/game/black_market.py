@@ -4,7 +4,7 @@ import random
 from typing import Any, Dict, List, Tuple
 
 from dragon_city.enums import GroupType
-from dragon_city.storage import save_game_config
+from dragon_city.storage import save_kompu_offers
 
 logger = logging.getLogger(__name__)
 
@@ -165,8 +165,8 @@ def check_and_update_black_market(
     current_ts = player_data.get("timestamp", 0)
     private_state = player_data["privateState"]
 
-    bm_start = int(private_state["BlackMarketStart"] or 0)
-    bm_end = int(private_state["BlackMarketEnd"] or 0)
+    bm_start = int(private_state.get("BlackMarketStart") or 0)
+    bm_end = int(private_state.get("BlackMarketEnd") or 0)
 
     if bm_start == 0 or bm_end == 0:
         return player_data, game_config
@@ -201,6 +201,6 @@ def check_and_update_black_market(
             logger.info("Black market is now visible in the HUD of player %s", user_id)
 
     if config_modified:
-        save_game_config(game_config, user_id)
+        save_kompu_offers(user_id, game_config["kompu_offers"])
 
     return player_data, game_config

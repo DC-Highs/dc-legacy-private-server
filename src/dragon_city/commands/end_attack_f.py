@@ -1,30 +1,43 @@
-import json
 import logging
+import time
 
 from dragon_city.commands.base import CommandContext, command
+from dragon_city.commands.validation import reject
 from dragon_city.enums import Command
-from dragon_city.game.combat import apply_kills
+from dragon_city.game.combat import apply_kills, parse_kills_log
 
 logger = logging.getLogger(__name__)
 
 PVP_WIN_POINTS = 35
 LEAGUE_COMPLETE_POINTS = 120
 LEAGUE_WIN_THRESHOLD = 7
+# A fight cannot be over the instant it began, and a pending attack goes stale.
+MIN_FIGHT_SECONDS = 10
+MAX_FIGHT_SECONDS = 3600
 
 
 @command(Command.END_ATTACK_F)
 def handle(ctx: CommandContext) -> None:
     args = ctx.args
-    target_player_id = str(args[0])
-    position = int(args[1])
-    win_status = int(args[2])
+    target_player_id = str(ctx.int_arg(0, "opponent id", 1))
+    position = ctx.int_arg(1, "position", 0, 1000)
+    win_status = ctx.flag_arg(2, "win status")
+    kills_log = parse_kills_log(args[3]) if len(args) > 3 else {}
 
-    kills_log = {}
-    if len(args) > 3 and args[3]:
-        try:
-            kills_log = json.loads(args[3])
-        except Exception:
-            logger.exception("Failed to decode kills_log")
+    # The fight must have been started with attack_player, and it can only be reported once.
+    now = int(time.time())
+    attacks_sent = ctx.private_state.get("attacksSent")
+    pending = next(
+        (a for a in reversed(attacks_sent if isinstance(attacks_sent, list) else [])
+         if isinstance(a, dict) and a.get("victim_id") == target_player_id),
+        None,
+    )
+    if pending is None:
+        reject(f"no attack against {target_player_id} is in progress")
+    fight_seconds = now - int(pending.get("time", 0))
+    if not MIN_FIGHT_SECONDS <= fight_seconds <= MAX_FIGHT_SECONDS:
+        reject(f"the attack against {target_player_id} lasted {fight_seconds}s, which is not plausible")
+    attacks_sent.remove(pending)
 
     private_state = ctx.private_state
 

@@ -1,7 +1,8 @@
 import logging
 
 from dragon_city.commands.base import CommandContext, command
-from dragon_city.enums import Command, Resource
+from dragon_city.commands.validation import reject
+from dragon_city.enums import Command
 
 logger = logging.getLogger(__name__)
 
@@ -15,11 +16,13 @@ def handle(ctx: CommandContext) -> None:
     private_state = ctx.private_state
     current_opened = private_state.get("kompuBoxesOpened", 0)
 
-    price = FIRST_BOX_PRICE if current_opened == 0 else NEXT_BOX_PRICE
-    ctx.info[Resource.CASH] -= price
-
     if current_opened >= MAX_BOXES:
-        return
+        reject("all the boxes are already open")
+
+    if len(private_state.get("kompuBoxesDragons", [])) <= current_opened:
+        reject("there is no kompu board to open a box from")
+
+    ctx.pay(cash=FIRST_BOX_PRICE if current_opened == 0 else NEXT_BOX_PRICE)
 
     private_state["kompuBoxesOpened"] = current_opened + 1
     new_opened = private_state["kompuBoxesOpened"]
