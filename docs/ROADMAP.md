@@ -47,5 +47,4 @@ neighbours bar and *Visit* opens their island. How the client uses neighbours is
 
 ## Tasks
 
-- [ ] Import the old JSON saves (`web/srv/<id>/<id>.json`) into accounts, if anyone wants to
-  keep progress from before the move to MongoDB.
+_Nothing planned right now._
