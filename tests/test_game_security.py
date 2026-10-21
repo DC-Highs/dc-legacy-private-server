@@ -210,15 +210,27 @@ def test_the_weekly_reward_is_claimed_once_per_week(client, player):
     assert gold(player["id"]) == after_first
 
 
-def test_free_card_draws_are_limited(client, player):
+def test_free_card_draws_are_limited(client, player, monkeypatch):
+    monkeypatch.setattr("src.commands.deus_cards_generate.random.randint", lambda a, b: 0)   # 5000 gold
     first = packet(client, ("deus_cards_generate", [0, 0]))[0]["result"]
-    assert isinstance(first, int)
+    assert first == 0
     second = packet(client, ("deus_cards_generate", [0, 0]))[0]["result"]
     assert second == "ok" and load_save(player["id"])["privateState"]["deus_cards"]["pending_prize"] == first
     packet(client, ("deus_cards_claim", []))
     gold_after = gold(player["id"])
     packet(client, ("deus_cards_claim", []), ("deus_cards_generate", [0, 0]), ("deus_cards_claim", []))
     assert gold(player["id"]) == gold_after
+
+
+def test_the_retry_prize_gives_one_more_free_draw(client, player, monkeypatch):
+    prizes = iter([2, 0])                                  # prize 2 is "retry", prize 0 is 5000 gold
+    monkeypatch.setattr("src.commands.deus_cards_generate.random.randint", lambda a, b: next(prizes))
+    packet(client, ("deus_cards_generate", [0, 0]), ("deus_cards_claim", []))
+    before = gold(player["id"])
+    packet(client, ("deus_cards_generate", [0, 0]), ("deus_cards_claim", []))       # the free retry
+    assert gold(player["id"]) == before + 5000
+    packet(client, ("deus_cards_generate", [0, 0]))                                  # no more free draws
+    assert load_save(player["id"])["privateState"]["deus_cards"]["pending_prize"] is None
 
 
 def test_a_card_prize_cannot_be_claimed_without_a_draw(client, player):
