@@ -4,9 +4,7 @@
 
 Administrators see an **Admin** button in the header and manage users at `/admin`.
 
-> 📸 **Screenshot needed:** the header of a logged-in administrator, with the "Admin" button.
-> Save it as `docs/images/admin-header.png`, then replace this block with
-> `![Header with the Admin button](images/admin-header.png)`.
+![Header with the Admin button](https://i.ibb.co/yBN653tj/screenshot-2.png)
 
 ### Users list
 
@@ -14,18 +12,14 @@ A table of every account: email and id, the player's name, status (Active / Disa
 level, gold, gems and last login. The search box matches part of an email or an exact id; the
 list is paged (15 per page).
 
-> 📸 **Screenshot needed:** the users table at `/admin` with a few accounts and the search box.
-> Save it as `docs/images/admin-users.png`, then replace this block with
-> `![The users table](images/admin-users.png)`.
+![The users table](https://i.ibb.co/39Wx71d3/image.png)
 
 ### Creating a user
 
 "New user" asks for an email, a password (8–128 characters) and whether the account is an
 administrator. It also creates a fresh game save, exactly like a sign-up.
 
-> 📸 **Screenshot needed:** the "New user" dialog.
-> Save it as `docs/images/admin-create-user.png`, then replace this block with
-> `![The New user dialog](images/admin-create-user.png)`.
+![The New user dialog](https://i.ibb.co/hJ6484t9/image.png)
 
 ### Managing a user
 
@@ -43,9 +37,7 @@ administrator. It also creates a fresh game save, exactly like a sign-up.
 You cannot disable, demote or delete your own account from the panel, so an administrator can
 never lock the system out by mistake.
 
-> 📸 **Screenshot needed:** the "Manage" dialog of a user.
-> Save it as `docs/images/admin-manage-user.png`, then replace this block with
-> `![The Manage dialog](images/admin-manage-user.png)`.
+![The Manage dialog](https://i.ibb.co/FkvYbYBz/image.png)
 
 ## Command line
 
