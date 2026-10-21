@@ -29,11 +29,6 @@ On start-up the `app` container:
 4. `docker compose up -d --build`
 5. Open <http://localhost:8080> (or your `APP_PORT`).
 
-> 📸 **Screenshot needed:** the terminal after `docker compose up -d --build`, showing
-> `docker compose ps` with the three services `healthy`.
-> Save it as `docs/images/compose-ps.png`, then replace this block with
-> `![The three services running](images/compose-ps.png)`.
-
 Useful commands:
 
 ```bash

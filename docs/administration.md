@@ -52,14 +52,9 @@ the Dragon Master whom every player can visit, and it cannot be edited or delete
 An administrator-made friendship skips the request, takes effect for both players after they reload the game, and pays the
 same 5 gems.
 
-> 📸 **Screenshot needed:** the "Friends" section of the Manage dialog with one friend listed.
-> Save it as `docs/images/admin-friends.png`, then replace this block with
-> `![The Friends section](images/admin-friends.png)`.
+![The Friends section](https://i.ibb.co/5Wwg050z/image.png)
 
-> 📸 **Screenshot needed:** the game with a friend in the neighbours bar (and, if possible, the
-> "Visit / Send gift" menu open).
-> Save it as `docs/images/game-neighbours.png`, then replace this block with
-> `![A friend in the neighbours bar](images/game-neighbours.png)`.
+![A friend in the neighbours bar](https://i.ibb.co/1tYxpcFX/image.png)
 
 ## Command line
 
