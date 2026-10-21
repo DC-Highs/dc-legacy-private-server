@@ -69,15 +69,17 @@ running.
 
 ## Screenshots
 
-> 📸 **Screenshot needed:** the game running in the browser, full screen under the header
-> (log in as a player and wait for the island to load).
-> Save it as `docs/images/game.png`, then replace this block with `![The game](docs/images/game.png)`.
+> **The game running in the browser**
 
-> 📸 **Screenshot needed:** the sign-up page (email, password, confirm password).
-> Save it as `docs/images/register.png`, then replace this block with `![Sign up](docs/images/register.png)`.
+![The game](https://i.ibb.co/HL9YSpqb/image.png)
 
-> 📸 **Screenshot needed:** the admin panel with the users table.
-> Save it as `docs/images/admin-users.png`, then replace this block with `![Admin panel](docs/images/admin-users.png)`.
+> **The sign-up page**
+
+![Sign up](https://i.ibb.co/JW8nf19c/image.png)
+
+> **The admin panel**
+
+![Admin panel](https://i.ibb.co/39Wx71d3/image.png)
 
 The full list of screenshots the documentation expects is in [docs/images/README.md](docs/images/README.md).
 
