@@ -84,6 +84,20 @@ rolls the whole command back (the save is restored from a snapshot).
   (`map.store`, `kompuBoxesOpened`…); it is normalised when a save is created or loaded.
 - `get_player_info` no longer fails for a player who has never unlocked the black market.
 
+### Friends and the 5-gem reward
+
+- Requests are authenticated and validated (no self, unknown or disabled accounts), rate
+  limited (30/hour per account) and capped (50 pending, 170 friends); a declined sender waits 7
+  days. Only the receiver can accept or decline, only the sender can cancel. Responses never
+  contain emails.
+- The reward is paid by the server, to both sides, only for the first 5 friends of each player
+  and once per friend (also after removing and re-adding). It is not a client command, so a
+  modified client cannot ask for it.
+- **Known limit:** nothing stops one person from creating several accounts and befriending
+  them to collect 5 × 5 gems per account. Sign-up is rate limited (3 per minute and 10 per hour
+  per address), but if that matters, set `REGISTRATION_ENABLED=false` and create accounts by
+  hand, or lower `FRIEND_REWARD_LIMIT` in `src/friends.py`.
+
 ## What the server cannot verify
 
 These are inherent to a client that simulates the game by itself:

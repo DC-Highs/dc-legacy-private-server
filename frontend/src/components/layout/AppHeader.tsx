@@ -1,15 +1,18 @@
-import { LogOutIcon, ShieldIcon } from "lucide-react"
+import { LogOutIcon, ShieldIcon, UsersIcon } from "lucide-react"
 import type { FC } from "react"
 import { Link as RouterLink, useNavigate } from "react-router-dom"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
 import { useAuth } from "@/lib/auth"
+import { usePending } from "@/lib/pending"
 
 type AppHeaderProps = { saved?: boolean }
 
 export const AppHeader: FC<AppHeaderProps> = ({ saved = false }) => {
   const { user, logout } = useAuth()
+  const { incoming } = usePending()
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -30,6 +33,10 @@ export const AppHeader: FC<AppHeaderProps> = ({ saved = false }) => {
         {user ? (
           <>
             <Typography.Muted className="hidden sm:block">{user.playerName || user.email}</Typography.Muted>
+            <Button variant="ghost" size="sm" render={<RouterLink to="/friends" />}>
+              <UsersIcon /> Friends
+              {incoming > 0 ? <Badge variant="destructive">{incoming}</Badge> : null}
+            </Button>
             {user.isAdmin ? (
               <Button variant="ghost" size="sm" render={<RouterLink to="/admin" />}>
                 <ShieldIcon /> Admin

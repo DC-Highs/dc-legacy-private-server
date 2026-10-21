@@ -43,10 +43,11 @@ never lock the system out by mistake.
 ### Friends
 
 The game shows a player's friends as neighbours at the bottom of the island, and a player can
-visit them. Until players can send each other requests (see [ROADMAP.md](ROADMAP.md)),
-administrators create friendships: open a user, go to **Friends**, and add the other player's
-id (it is shown under each email in the users table). Both players see each other after they
-reload the game.
+visit them. Players normally make friends themselves with requests on the **Friends** page of
+the web client. Administrators can also create a friendship directly: open a user, go to
+**Friends**, and add the other player's id (it is shown under each email in the users table).
+It skips the request, takes effect for both players after they reload the game, and pays the
+same 5 gems.
 
 > 📸 **Screenshot needed:** the "Friends" section of the Manage dialog with one friend listed.
 > Save it as `docs/images/admin-friends.png`, then replace this block with

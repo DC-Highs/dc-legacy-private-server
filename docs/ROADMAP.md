@@ -4,7 +4,12 @@ Things we want to do but have not started. Add new ideas at the bottom of "Ideas
 
 ## Ideas
 
-### Friend system
+### Friend system (done: first version)
+
+The first version is built: friend requests by player id, accept/decline/cancel/remove, the
+Friends page with a badge in the header, neighbours and visiting in the game, and the 5-gem
+reward. See [api.md](api.md#friends-apifriends) and [game-protocol.md](game-protocol.md#neighbours).
+What is left is the list below; the original plan is kept for reference.
 
 **Goal:** a player sends a friend request to another player by id, and the other player can
 accept (or decline) it. The Flash client was never built for this, so the whole flow lives in

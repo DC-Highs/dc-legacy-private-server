@@ -48,6 +48,9 @@ Flash game in the browser with [Ruffle](https://ruffle.rs/).
 - **Accounts:** sign up with an email, a password and its confirmation (no email code). Each
   account is one player.
 - **Admin panel:** administrators create and manage users from `/admin`.
+- **Friends:** players send each other friend requests by player id on the web client's
+  Friends page; friends become neighbours in the game (visit their island, help them), and both
+  get 5 gems for each of their first 5 friends.
 - **Storage:** accounts and sessions in PostgreSQL, each player's save in MongoDB.
 - **Hardened:** the client is treated as untrusted; every command is validated server-side.
   See [docs/SECURITY.md](docs/SECURITY.md).
@@ -63,7 +66,7 @@ Flash game in the browser with [Ruffle](https://ruffle.rs/).
 | Saves in MongoDB, accounts in PostgreSQL | ✅ Working |
 | Docker deployment | ✅ Working |
 | Market and minigame pages | ❌ No web UI (the API is still there) |
-| Friend system | 💡 Planned, see [docs/ROADMAP.md](docs/ROADMAP.md) |
+| Friends (requests, neighbours, visiting, the 5 gems) | ✅ Working |
 
 Commands that are not implemented are answered with a generic `ok` so the client keeps
 running.
@@ -83,6 +86,11 @@ running.
 > **The admin panel**
 
 ![Admin panel](https://i.ibb.co/39Wx71d3/image.png)
+
+> **The Friends page**
+
+> 📸 **Screenshot needed:** the Friends page with an incoming request and the badge in the header.
+> Save it as `docs/images/friends-page.png`, then replace this block with `![Friends](docs/images/friends-page.png)`.
 
 The full list of screenshots the documentation expects is in [docs/images/README.md](docs/images/README.md).
 

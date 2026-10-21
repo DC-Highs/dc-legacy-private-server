@@ -87,3 +87,17 @@ export type Friend = {
   email: string
   playerName: string
 }
+
+export type FriendProfile = {
+  id: number
+  playerName: string
+  level: number
+}
+
+export type FriendsOverview = {
+  playerId: number
+  friends: FriendProfile[]
+  incoming: { requestId: number; createdAt: string; from: FriendProfile }[]
+  outgoing: { requestId: number; createdAt: string; to: FriendProfile }[]
+  limits: { maxFriends: number; rewardGems: number; rewardLimit: number }
+}

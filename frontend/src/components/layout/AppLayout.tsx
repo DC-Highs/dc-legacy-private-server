@@ -3,6 +3,7 @@ import type { FC } from "react"
 import { Outlet, useOutletContext } from "react-router-dom"
 
 import { AppHeader } from "@/components/layout/AppHeader"
+import { PendingProvider } from "@/lib/pending"
 
 type LayoutContext = { flashSaved: () => void }
 
@@ -18,11 +19,13 @@ export const AppLayout: FC = () => {
   }, [])
 
   return (
-    <div className="flex h-dvh flex-col bg-background text-foreground">
-      <AppHeader saved={saved} />
-      <main className="min-h-0 flex-1 overflow-auto">
-        <Outlet context={{ flashSaved } satisfies LayoutContext} />
-      </main>
-    </div>
+    <PendingProvider>
+      <div className="flex h-dvh flex-col bg-background text-foreground">
+        <AppHeader saved={saved} />
+        <main className="min-h-0 flex-1 overflow-auto">
+          <Outlet context={{ flashSaved } satisfies LayoutContext} />
+        </main>
+      </div>
+    </PendingProvider>
   )
 }

@@ -88,6 +88,26 @@ All admin endpoints require an administrator (`401` when logged out, `403` other
 Safeguards: you cannot disable, demote or delete **your own** account; the search treats `%`
 and `_` literally; the email must be unique (`409`).
 
+## Friends (`/api/friends`)
+
+All require a login. Friends are the player's **neighbours** in the game. Responses show a
+player's id, in-game name and level, never their email.
+
+| Method and path | Body | Result |
+|---|---|---|
+| `GET /` | – | `{ playerId, friends[], incoming[], outgoing[], limits }`. `incoming`/`outgoing` hold `{ requestId, createdAt, from/to }`; `limits` has `maxFriends` (170), `rewardGems` (5) and `rewardLimit` (5). |
+| `GET /summary` | – | `{ incoming }`: how many requests wait for an answer (the header badge polls it). |
+| `POST /requests` | `{ playerId }` | `201 { requestId, accepted, gemsAwarded }`. If that player had already asked you, the two requests meet: `accepted` is `true` and you are friends. |
+| `POST /requests/{id}/accept` | – | `{ ok, gemsAwarded }`. Only the player who received the request. |
+| `POST /requests/{id}/decline` | – | Only the player who received it. |
+| `DELETE /requests/{id}` | – | The sender takes a pending request back. |
+| `DELETE /{playerId}` | – | Ends a friendship (either side); `404` if they are not friends. |
+
+Rules: no requests to yourself (`400`), to unknown or disabled accounts (`404`), to a friend or
+someone you already asked (`409`); at most 30 requests per hour per account; at most 50
+pending requests; a friend list holds up to 170; after a decline the sender has to wait 7 days
+(`429`). Gems: see [game-protocol.md](game-protocol.md#neighbours).
+
 ## Other endpoints kept from the original
 
 They have no web page but still work, and they act on the logged-in player:

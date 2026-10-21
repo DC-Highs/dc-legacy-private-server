@@ -17,6 +17,7 @@ Tips: use a 1280×800 window, a dark browser theme matches the app, and use thro
 | `admin-manage-user.png` | `administration.md` | The "Manage" dialog of a user. |
 | `admin-friends.png` | `administration.md` | The "Friends" section of the Manage dialog with one friend listed. |
 | `game-neighbours.png` | `administration.md` | The game with a friend in the neighbours bar (ideally with the Visit / Send gift menu open). |
+| `friends-page.png` | `README.md` | The Friends page of the web client with an incoming request (and the badge in the header). |
 | `compose-ps.png` | `deployment.md` | `docker compose ps` with the three services `healthy`. |
 
 Find every marked spot with: `grep -rn "Screenshot needed" README.md docs`.

@@ -229,6 +229,7 @@ def add_friend(user_id: int):
         _get_user(session, user_id)
         friends.add_friends(session, user_id, body.friend_id)
         items = [_friend_entry(u) for u in friends.friends_of(session, user_id)]
+    friends.award_both(user_id, body.friend_id)
     logger.info("Admin %s made %s and %s friends", current_user().id, user_id, body.friend_id)
     response = jsonify({"items": items})
     response.status_code = 201

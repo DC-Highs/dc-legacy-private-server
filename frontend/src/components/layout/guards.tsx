@@ -10,6 +10,13 @@ const Loading: FC = () => (
   </div>
 )
 
+export const RequireUser: FC = () => {
+  const { user, loading } = useAuth()
+  if (loading) return <Loading />
+  if (!user) return <Navigate to="/login" replace />
+  return <Outlet />
+}
+
 export const RequireAdmin: FC = () => {
   const { user, loading } = useAuth()
   if (loading) return <Loading />

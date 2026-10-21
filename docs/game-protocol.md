@@ -41,9 +41,16 @@ How the Flash client gets and shows its friends (found by reading the SWF's Acti
    `get_player_info` with `user=<id>` and shows that player's island (read-only) with a
    "Return home" button. The **Assist** button sends `assist_neighbor`.
 
-Friendships are mutual and are managed by administrators for now (see
-[administration.md](administration.md)); `neighbors` is computed on every request and is never
-stored in the save. Visiting and `assist_neighbor` are refused for anyone who is not a friend.
+Friendships are mutual. Players make them with friend requests in the web client
+([api.md](api.md#friends-apifriends)); administrators can also create them. `neighbors` is
+computed on every request and is never stored in the save. Visiting and `assist_neighbor` are
+refused for anyone who is not a friend.
+
+**"Add a friend and get 5 gems."** The game's neighbour cards promise it. When a friendship is
+made (a request accepted, or an administrator adding one) **both players** get 5 gems, for
+each of their first 5 friends: one per invite card. A given friend pays once, even if the
+friendship is ended and made again. The gems are added to the save on the spot; an open game
+shows them after the next packet or a reload.
 
 ## `packet.php`
 
