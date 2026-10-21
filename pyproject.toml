@@ -1,6 +1,6 @@
 [project]
 name = "dragon-city-legacy"
-version = "0.1.0"
+version = "0.2.0"
 description = "Dragon City Flash Restoration Project - local server for the original Adobe Flash game (2012-2020)"
 authors = [
     { name = "Gabriel18017" },
