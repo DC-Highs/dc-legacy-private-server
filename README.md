@@ -89,8 +89,7 @@ running.
 
 > **The Friends page**
 
-> 📸 **Screenshot needed:** the Friends page with an incoming request and the badge in the header.
-> Save it as `docs/images/friends-page.png`, then replace this block with `![Friends](docs/images/friends-page.png)`.
+![The Friends page](https://i.ibb.co/LXPJrLdm/image.png)
 
 The full list of screenshots the documentation expects is in [docs/images/README.md](docs/images/README.md).
 
