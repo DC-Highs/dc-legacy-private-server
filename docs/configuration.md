@@ -17,6 +17,8 @@ to the containers. The code reads them in `src/config.py`.
 | `ALLOWED_ORIGINS` | empty | Extra origins allowed to send state-changing requests, comma separated. Normally empty: the web client and the API share one origin. |
 | `REGISTRATION_ENABLED` | `true` | `false` stops public sign-ups; admins can still create accounts. |
 | `SESSION_DAYS` | `14` | Days a login stays valid (renewed while in use). |
+| `MAX_FRIENDS` | `20` | The most friends an account can have. Lowering it does not remove existing friends; it only blocks new ones. |
+| `MAX_PENDING_REQUESTS` | `5` | Sent friend requests that can wait for an answer at once, per account. |
 | `GAME_SWF` | `Base_sec_0.6.7c.swf` | Which Flash client in `flash/` is loaded. |
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR`. |
 

@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src import storage
+from src.config import get_settings
 from src.db.models import Friendship, User
 from src.errors import ApiError, conflict, not_found, validation_error
 
@@ -22,13 +23,21 @@ PENDING = "pending"
 ACCEPTED = "accepted"
 DECLINED = "declined"
 
-MAX_FRIENDS = 170          # the game talks about "170 friends"
-MAX_OUTGOING_REQUESTS = 50
 DECLINE_COOLDOWN = timedelta(days=7)
 
 # "Add a friend and get 5 gems": paid to both players, for their first FRIEND_REWARD_LIMIT friends.
 FRIEND_REWARD_GEMS = 5
 FRIEND_REWARD_LIMIT = 5
+
+
+def max_friends() -> int:
+    """Friends an account can have (``MAX_FRIENDS``, 20 by default)."""
+    return get_settings().max_friends
+
+
+def max_pending_requests() -> int:
+    """Sent requests that can wait for an answer at once (``MAX_PENDING_REQUESTS``, 5 by default)."""
+    return get_settings().max_pending_requests
 
 
 def _now() -> datetime:
@@ -109,7 +118,7 @@ def remove_friends(session: Session, a: int, b: int) -> bool:
 
 def _accept(session: Session, friendship: Friendship) -> None:
     for user_id in (friendship.low_id, friendship.high_id):
-        if count_friends(session, user_id) >= MAX_FRIENDS:
+        if count_friends(session, user_id) >= max_friends():
             raise conflict("A friend list is full")
     friendship.status = ACCEPTED
     friendship.responded_at = _now()
@@ -144,9 +153,9 @@ def send_request(session: Session, requester_id: int, target_id: int) -> Tuple[F
         select(func.count()).select_from(Friendship).where(
             Friendship.status == PENDING, Friendship.requester_id == requester_id)
     ) or 0
-    if outgoing >= MAX_OUTGOING_REQUESTS:
-        raise conflict("You have too many pending requests")
-    if count_friends(session, requester_id) >= MAX_FRIENDS:
+    if outgoing >= max_pending_requests():
+        raise conflict(f"You can have at most {max_pending_requests()} pending requests. Wait for an answer or cancel one.")
+    if count_friends(session, requester_id) >= max_friends():
         raise conflict("Your friend list is full")
 
     if row is None:

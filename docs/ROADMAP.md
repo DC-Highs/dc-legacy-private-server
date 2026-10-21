@@ -38,7 +38,7 @@ neighbours bar and *Visit* opens their island. How the client uses neighbours is
   button, a field to send a request by id, incoming requests with Accept/Decline, the friend
   list with Remove, and a badge in the header when there are pending requests.
 - **Game integration:** done, see above. Possible extras: *Send gift* (a command the server
-  does not implement yet) and a friends cap (the client mentions up to 170 friends).
+  does not implement yet) and a different friends cap (see `MAX_FRIENDS`).
 - **Privacy:** requests go by player id, so ids are effectively public handles; show the
   player's name but never the email, and let players block or ignore requests.
 - **Tests:** request/accept/decline flows, duplicates and self-requests, ids that do not

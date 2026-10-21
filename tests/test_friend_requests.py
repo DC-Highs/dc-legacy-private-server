@@ -3,6 +3,7 @@ import pytest
 from conftest import load_save, register
 from src import friends
 from src.db.models import Friendship
+from src.config import get_settings
 from src.extensions import limiter
 from src.db.postgres import session_scope
 
@@ -175,7 +176,8 @@ def test_sending_requests_is_rate_limited(app, pair):
 
 def test_limits_on_pending_requests_and_friend_lists(app, pair, monkeypatch):
     alice, alice_id, bob, bob_id = pair
-    monkeypatch.setattr(friends, "MAX_FRIENDS", 1)
+    monkeypatch.setenv("MAX_FRIENDS", "1")
+    get_settings.cache_clear()
     carol, carol_id = make_player(app, "carol@example.com")
     ask(alice, bob_id)
     bob.post(f"/api/friends/requests/{overview(bob)['incoming'][0]['requestId']}/accept")
@@ -183,6 +185,45 @@ def test_limits_on_pending_requests_and_friend_lists(app, pair, monkeypatch):
     assert ask(carol, bob_id).status_code == 201                      # Bob's list is full too:
     request_id = overview(bob)["incoming"][0]["requestId"]
     assert bob.post(f"/api/friends/requests/{request_id}/accept").status_code == 409   # it cannot be accepted
+    get_settings.cache_clear()
+
+
+def test_the_defaults_are_20_friends_and_5_pending_requests(pair):
+    alice, *_ = pair
+    limits = overview(alice)["limits"]
+    assert limits["maxFriends"] == 20 and limits["maxPendingRequests"] == 5
+
+
+def test_at_most_5_sent_requests_can_wait(app, pair):
+    alice, alice_id, bob, bob_id = pair
+    others = [make_player(app, f"o{i}@example.com")[1] for i in range(5)]
+    assert ask(alice, bob_id).status_code == 201
+    for other_id in others[:4]:
+        assert ask(alice, other_id).status_code == 201            # five waiting now
+    blocked = ask(alice, others[4])
+    assert blocked.status_code == 409 and "at most 5" in blocked.get_json()["error"]["message"]
+
+    # answering or cancelling one frees a place
+    request_id = overview(alice)["outgoing"][0]["requestId"]
+    assert alice.delete(f"/api/friends/requests/{request_id}").status_code == 200
+    assert ask(alice, others[4]).status_code == 201
+    # receiving requests is not limited by this
+    assert len(overview(bob)["incoming"]) <= 1
+
+
+def test_the_limits_can_be_changed_with_environment_variables(app, pair, monkeypatch):
+    monkeypatch.setenv("MAX_FRIENDS", "3")
+    monkeypatch.setenv("MAX_PENDING_REQUESTS", "2")
+    get_settings.cache_clear()
+    try:
+        alice, alice_id, bob, bob_id = pair
+        assert overview(alice)["limits"] == {**overview(alice)["limits"], "maxFriends": 3, "maxPendingRequests": 2}
+        others = [make_player(app, f"x{i}@example.com")[1] for i in range(3)]
+        assert ask(alice, bob_id).status_code == 201
+        assert ask(alice, others[0]).status_code == 201
+        assert ask(alice, others[1]).status_code == 409
+    finally:
+        get_settings.cache_clear()
 
 
 # --- the "add a friend and get 5 gems" reward ------------------------------------------

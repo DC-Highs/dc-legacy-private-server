@@ -135,7 +135,7 @@ export const FriendsPage: FC = () => {
     )
   }
 
-  const { rewardGems, rewardLimit, maxFriends } = overview.limits
+  const { rewardGems, rewardLimit, maxFriends, maxPendingRequests } = overview.limits
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
@@ -163,7 +163,8 @@ export const FriendsPage: FC = () => {
         <CardHeader>
           <CardTitle>Add a friend</CardTitle>
           <CardDescription>
-            You both get {rewardGems} gems for each of your first {rewardLimit} friends.
+            You both get {rewardGems} gems for each of your first {rewardLimit} friends. You can have up to{" "}
+            {maxPendingRequests} requests waiting for an answer ({overview.outgoing.length} now).
           </CardDescription>
         </CardHeader>
         <CardContent>

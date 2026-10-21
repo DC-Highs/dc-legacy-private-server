@@ -52,7 +52,8 @@ def _overview(session, user_id: int) -> Dict[str, Any]:
             {"requestId": r.id, "createdAt": r.created_at.isoformat(), "to": people[friends.addressee_id(r)]}
             for r in outgoing
         ],
-        "limits": {"maxFriends": friends.MAX_FRIENDS, "rewardGems": friends.FRIEND_REWARD_GEMS,
+        "limits": {"maxFriends": friends.max_friends(), "maxPendingRequests": friends.max_pending_requests(),
+                   "rewardGems": friends.FRIEND_REWARD_GEMS,
                    "rewardLimit": friends.FRIEND_REWARD_LIMIT},
     }
 

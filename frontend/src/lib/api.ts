@@ -99,5 +99,5 @@ export type FriendsOverview = {
   friends: FriendProfile[]
   incoming: { requestId: number; createdAt: string; from: FriendProfile }[]
   outgoing: { requestId: number; createdAt: string; to: FriendProfile }[]
-  limits: { maxFriends: number; rewardGems: number; rewardLimit: number }
+  limits: { maxFriends: number; maxPendingRequests: number; rewardGems: number; rewardLimit: number }
 }

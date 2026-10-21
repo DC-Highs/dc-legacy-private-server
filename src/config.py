@@ -69,6 +69,8 @@ class Settings:
     mongo_password: str
     cookie_secure: bool
     session_days: int
+    max_friends: int
+    max_pending_requests: int
     registration_enabled: bool
     allowed_origins: Tuple[str, ...]
     trust_proxy: bool
@@ -94,6 +96,8 @@ class Settings:
             mongo_password=env.get("MONGO_PASSWORD", ""),
             cookie_secure=_flag(env.get("COOKIE_SECURE"), False),
             session_days=int(env.get("SESSION_DAYS", "14")),
+            max_friends=max(1, int(env.get("MAX_FRIENDS", "20"))),
+            max_pending_requests=max(1, int(env.get("MAX_PENDING_REQUESTS", "5"))),
             registration_enabled=_flag(env.get("REGISTRATION_ENABLED"), True),
             allowed_origins=origins,
             trust_proxy=_flag(env.get("TRUST_PROXY"), False),

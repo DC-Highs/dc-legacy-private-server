@@ -87,7 +87,8 @@ rolls the whole command back (the save is restored from a snapshot).
 ### Friends and the 5-gem reward
 
 - Requests are authenticated and validated (no self, unknown or disabled accounts), rate
-  limited (30/hour per account) and capped (50 pending, 170 friends); a declined sender waits 7
+  limited (30/hour per account) and capped (5 pending sent requests and 20 friends by default,
+  `MAX_PENDING_REQUESTS` and `MAX_FRIENDS`); a declined sender waits 7
   days. Only the receiver can accept or decline, only the sender can cancel. Responses never
   contain emails.
 - The reward is paid by the server, to both sides, only for the first 5 friends of each player
