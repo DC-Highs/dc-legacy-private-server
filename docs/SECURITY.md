@@ -24,7 +24,7 @@ Out of scope: someone with access to the host, the databases or the `.env` file.
 | The player id came from the request (`USERID`, `id`, `user_id`, `fb_sig_user`): anyone could play, read or **delete** any account. | Identity comes only from the login session. Client-sent ids are ignored (`routes/srv.py`, `routes/packet.py`). |
 | `user_id` was joined into a file path (`web/srv/<id>/`): `../` reached other directories and `/delete_profile` could `rmtree` them. | Saves live in MongoDB under an integer `_id`; there are no paths built from client input. `/delete_profile` is gone (admins delete users). |
 | `/delete_profile`, `/generate_pvp`, the market and minigame endpoints needed no login. | Every game endpoint requires a session; PvP generation is admin-only. |
-| Visiting an unknown neighbour created a new save for that id, and any player's save could be read by anyone. | Visiting is read-only and only possible for **friends** (404 otherwise). |
+| Visiting an unknown neighbour created a new save for that id, and any player's save could be read by anyone. | Visiting is read-only and only possible for **friends** (404 otherwise), plus Deus, the system account the game shows to everybody. |
 | Game files (`/flash`, `/assets`) were public. | They require a login. |
 | Wildcard CORS (`Access-Control-Allow-Origin: *`). | CORS is not enabled; the client and API share one origin. |
 | `str(exception)` returned to the client. | Generic 500 body; details go to the log. |

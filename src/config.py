@@ -15,6 +15,9 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 SECRET_KEY = "RGhXbiy4xEeDnSNX1oBG"
 
 PVP_PAGE_SIZE = 8
+
+# Deus, the Dragon Master: the "Deus" card of the neighbours bar visits this fixed player id.
+DEUS_PLAYER_ID = 100000030
 SSE_KEEPALIVE_SECONDS = 20
 
 # 1x1 transparent GIF returned for the analytics stubs.

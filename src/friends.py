@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src import storage
-from src.config import get_settings
+from src.config import DEUS_PLAYER_ID, get_settings
 from src.db.models import Friendship, User
 from src.errors import ApiError, conflict, not_found, validation_error
 
@@ -222,6 +222,8 @@ def add_friends(session: Session, a: int, b: int) -> Friendship:
     """Make two existing, different accounts friends right away (used by administrators)."""
     if a == b:
         raise validation_error({"friendId": "An account cannot be its own friend"})
+    if DEUS_PLAYER_ID in (a, b):
+        raise validation_error({"friendId": "Deus is a system account and cannot have friends"})
     if session.get(User, a) is None or session.get(User, b) is None:
         raise not_found("User not found")
 
@@ -269,6 +271,9 @@ def friends_flashvar(session: Session, user_id: int) -> str:
 
 
 def require_friendship(session: Session, user_id: int, other: Optional[int]) -> None:
+    """Visiting is for friends, and for Deus, whom the game shows to everybody."""
+    if other == DEUS_PLAYER_ID:
+        return
     if other is None or not are_friends(session, user_id, other):
         raise not_found("Neighbour not found")
 

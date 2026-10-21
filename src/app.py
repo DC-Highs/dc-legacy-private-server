@@ -15,6 +15,7 @@ from src.errors import ApiError
 from src.extensions import limiter
 from src.game.pvp import seed_pvp_data
 from src.routes import register_blueprints
+from src.system_accounts import ensure_deus
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ def startup_tasks(settings: Optional[Settings] = None) -> None:
     ensure_indexes()
     seed_pvp_data()
     with session_scope() as session:
+        ensure_deus(session)
         if settings.admin_email and settings.admin_password:
             auth_service.ensure_admin(session, settings.admin_email, settings.admin_password)
         auth_service.purge_expired_sessions(session)

@@ -12,6 +12,7 @@ from src.auth import service
 from src.auth.context import admin_required, current_user
 from src.db.models import User
 from src.db.postgres import session_scope
+from src.config import DEUS_PLAYER_ID
 from src.errors import ApiError, forbidden, not_found, validation_error
 from src.game.pvp import generate_pvp_opponents
 
@@ -59,6 +60,13 @@ def _get_user(session, user_id: int) -> User:
     if user is None:
         raise not_found("User not found")
     return user
+
+
+def _get_editable_user(session, user_id: int) -> User:
+    """Like ``_get_user`` but refuses system accounts (Deus), which are not for editing."""
+    if user_id == DEUS_PLAYER_ID:
+        raise forbidden("This is a system account")
+    return _get_user(session, user_id)
 
 
 def _user_with_player(user: User):
@@ -127,7 +135,7 @@ def update_user(user_id: int):
     body = parse_body(UpdateUserBody)
     me = current_user()
     with session_scope() as session:
-        user = _get_user(session, user_id)
+        user = _get_editable_user(session, user_id)
 
         if user.id == me.id and (body.is_active is False or body.is_admin is False):
             raise forbidden("You cannot disable or demote your own account")
@@ -161,7 +169,7 @@ def delete_user(user_id: int):
     if user_id == me.id:
         raise forbidden("You cannot delete your own account")
     with session_scope() as session:
-        user = _get_user(session, user_id)
+        user = _get_editable_user(session, user_id)
         session.delete(user)
     storage.delete_player(user_id)
     logger.info("Admin %s deleted account %s", me.id, user_id)

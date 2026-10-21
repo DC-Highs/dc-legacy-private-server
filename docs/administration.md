@@ -46,7 +46,10 @@ The game shows a player's friends as neighbours at the bottom of the island, and
 visit them. Players normally make friends themselves with requests on the **Friends** page of
 the web client. Administrators can also create a friendship directly: open a user, go to
 **Friends**, and add the other player's id (it is shown under each email in the users table).
-It skips the request, takes effect for both players after they reload the game, and pays the
+The system account **Deus** (id `100000030`) shows up in the users table as disabled: it is
+the Dragon Master whom every player can visit, and it cannot be edited or deleted.
+
+An administrator-made friendship skips the request, takes effect for both players after they reload the game, and pays the
 same 5 gems.
 
 > 📸 **Screenshot needed:** the "Friends" section of the Manage dialog with one friend listed.

@@ -46,6 +46,13 @@ Friendships are mutual. Players make them with friend requests in the web client
 computed on every request and is never stored in the save. Visiting and `assist_neighbor` are
 refused for anyone who is not a friend.
 
+**Deus.** The "Deus" card in the neighbours bar belongs to the client: it visits the fixed player
+id `100000030` (`DEUS_PLAYER_ID`). If nothing answers, the game stays on a loading bar forever.
+The server therefore keeps a system account and a save for Deus (`system_accounts.py`, created
+at start-up) that **every** player may visit, friends or not. Deus cannot log in (the account is
+disabled and has an unknown password), cannot be befriended, does not appear in `neighbors`, and
+administrators cannot edit or delete him.
+
 **"Add a friend and get 5 gems."** The game's neighbour cards promise it. When a friendship is
 made (a request accepted, or an administrator adding one) **both players** get 5 gems, for
 each of their first 5 friends: one per invite card. A given friend pays once, even if the
