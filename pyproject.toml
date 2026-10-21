@@ -7,6 +7,8 @@ authors = [
     { name = "Marcuth", email = "me@marcuth.dev" },
 ]
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 urls = { Author = "https://github.com/Gabriel18017" }
 requires-python = ">=3.9,<4.0"
 dependencies = ["flask (>=3.1.3,<4.0.0)", "flask-cors (>=6.0.5,<7.0.0)"]

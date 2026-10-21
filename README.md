@@ -5,9 +5,10 @@
 original en Adobe Flash (2012–2020), mantenido vivo por la comunidad.
 
 [![Estado](https://img.shields.io/badge/Estado-En_Desarrollo-orange)]()
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)]()
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)]()
 [![Flask](https://img.shields.io/badge/Flask-Servidor_Local-lightgrey)]()
-[![Comandos](https://img.shields.io/badge/Comandos_Implementados-73%2F104-yellow)]()
+[![Licencia](https://img.shields.io/badge/Licencia-MIT-green.svg)](LICENSE)
+[![Comandos](https://img.shields.io/badge/Comandos_Implementados-60%2F104-yellow)]()
 
 ---
 
@@ -38,7 +39,7 @@ El servidor local es funcional y permite cargar el juego.
 | Módulo | Estado |
 |---|---|
 | Motor de Cría | ✅ Funcional |
-| Comandos (`packets.php`) | ⚠️ 73 / 104 implementados |
+| Comandos (`packet.php`) | ⚠️ 60 / 104 implementados |
 | Minijuego: Reflejo del Dragón | ✅ Funcional |
 | Minijuego: Memoria | ❌ En desarrollo |
 | Minijuego: Tesoro | ❌ En desarrollo |
@@ -58,29 +59,62 @@ del juego de manera completa.
 
 ### Requisitos
 
-- Un navegador compatible con Flash Player
-  - ⚡ **Recomendado:** [FlashBrowser](https://github.com/radubirsan/FlashBrowser/releases/latest)
-  - 🌕 Alternativa: [Pale Moon](https://www.palemoon.org/)
+- Un navegador moderno. El juego se ejecuta con [Ruffle](https://ruffle.rs/), que se carga
+  desde `index.html`, así que ya no hace falta Flash Player (se necesita conexión a internet
+  para descargarlo desde unpkg).
+  - Alternativa: [FlashBrowser](https://github.com/radubirsan/FlashBrowser/releases/latest)
+    o [Pale Moon](https://www.palemoon.org/) con Flash Player.
+- Permisos de **administrador**: el servidor agrega entradas al archivo `hosts` de Windows
+  (y las elimina al cerrarse) y escucha en el puerto 80.
 
-### 1. Descargar el servidor
+### Opción A: ejecutable
 
-- Descarga la última versión desde la sección [Releases](../../releases/latest).
-- Extrae el archivo `.zip` en la carpeta que prefieras.
-
-### 2. Iniciar el servidor
-
-- Ejecuta `Dragon City.exe`.
-- Abre el navegador con Flash y navegá hasta `http://127.0.0.1:80`.
+1. Descarga la última versión desde la sección [Releases](../../releases/latest).
+2. Extrae el archivo `.zip` en la carpeta que prefieras.
+3. Ejecuta `Dragon City.exe` como administrador.
 
 > ⚠️ **Nota:** Windows puede mostrar una advertencia de SmartScreen al ejecutar el archivo.
 > Haz clic en **"Más información" → "Ejecutar de todas formas"**. Esto es normal en ejecutables
 > que no están firmados digitalmente.
 
+### Opción B: desde el código fuente
+
+Requiere Python 3.9+ y [Poetry](https://python-poetry.org/).
+
+```bash
+poetry install
+poetry run dragon-city      # ejecutar en una terminal con permisos de administrador
+```
+
+También funciona con `poetry run python -m dragon_city`. El nivel de logs se cambia con la
+variable de entorno `DRAGON_CITY_LOG_LEVEL` (por defecto `INFO`).
+
+Después abre el navegador en `http://127.0.0.1:80`.
+
+---
+
+## 🧱 Estructura del Proyecto
+
+```
+src/dragon_city/
+├── __main__.py        # punto de entrada (hosts, servidor de políticas, Flask)
+├── app.py             # fábrica de la aplicación Flask (CORS + blueprints)
+├── enums.py           # comandos, eventos SSE, recursos, atributos...
+├── config.py          # rutas y constantes
+├── storage.py         # lectura/escritura de configuración y partidas (web/srv)
+├── commands/          # un módulo por comando de packet.php
+├── game/              # reglas: cría, mercado negro, mercado, PvP, dragonario...
+└── routes/            # blueprints HTTP (páginas, srv, packet, mercado, minijuegos...)
+```
+
+Para agregar un comando, crea un módulo en `commands/` con un manejador decorado con
+`@command(Command.X)` (y agrega el valor al enum `Command`).
+
 ---
 
 ## 🎮 Cómo Jugar
 
-- Abre el navegador y navega a `http://127.0.0.1:80`.
+- Inicia el servidor y navega a `http://127.0.0.1:80` en tu navegador.
 - Crea un perfil en la pantalla de inicio y disfruta.
 
 ---
@@ -105,9 +139,10 @@ Cuando crees un usuario, usá los botones Exportar / Importar que están en logi
 
 ## 📄 Licencia
 
-```
-Dragon City Flash Restoration Project.
-Reconstrucción de servidor local — Proyecto personal de preservación.
-El código fuente del servidor (.py, .html adaptados) está bajo la Licencia MIT.
-Los activos originales del juego (.swf, imágenes, audio) pertenecen a SocialPoint / Take-Two Interactive.
-```
+El código fuente del servidor (`src/`, y los `.html` adaptados) está bajo la
+[Licencia MIT](LICENSE).
+
+Los activos originales del juego (`.swf`, imágenes, audio) **no** están cubiertos por esa
+licencia: pertenecen a SocialPoint / Take-Two Interactive.
+
+Autores: [Gabriel18017](https://github.com/Gabriel18017) y [Marcuth](https://github.com/Marcuth).
