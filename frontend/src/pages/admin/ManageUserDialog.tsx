@@ -16,6 +16,7 @@ import { api } from "@/lib/api"
 import type { User } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { applyServerErrors } from "@/lib/forms"
+import { FriendsSection } from "@/pages/admin/FriendsSection"
 
 const passwordSchema = z.object({
   password: z.string().min(8, "Use at least 8 characters").max(128, "Use at most 128 characters"),
@@ -211,6 +212,10 @@ export const ManageUserDialog: FC<ManageUserDialogProps> = ({ user, onClose, onC
             </Button>
           </FieldGroup>
         </form>
+
+        <Separator />
+
+        <FriendsSection userId={user.id} />
 
         <Separator />
 

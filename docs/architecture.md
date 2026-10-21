@@ -59,6 +59,7 @@ Request pipeline (`auth/context.py`), for every request:
 | Table | Columns |
 |---|---|
 | `users` | `id` (identity, starts at 200000000), `email` (unique, lower-case), `password_hash` (Argon2id), `is_admin`, `is_active`, `created_at`, `last_login_at` |
+| `friendships` | `low_id` < `high_id` (the pair is stored once, so it cannot be duplicated in the other direction), `requester_id`, `status` (`accepted` today; `pending` is reserved for the request flow), `created_at`, `responded_at`. Cascades when an account is deleted. |
 | `sessions` | `token_hash` (SHA-256 of the cookie token, primary key), `user_id` (cascade delete), `created_at`, `last_seen_at`, `expires_at`, `ip`, `user_agent` |
 
 Schema changes go through migrations in `src/migrations/versions/`, applied by

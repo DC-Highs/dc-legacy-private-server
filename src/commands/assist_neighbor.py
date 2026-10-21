@@ -1,9 +1,10 @@
 import json
 import logging
 
-from src import storage
+from src import friends, storage
 from src.commands.base import CommandContext, command
 from src.commands.validation import check_json_depth, reject
+from src.db.postgres import session_scope
 from src.enums import Command
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,9 @@ def handle(ctx: CommandContext) -> None:
 
     if target_id == ctx.user_id:
         reject("a player cannot assist themselves")
+    with session_scope() as session:
+        if not friends.are_friends(session, ctx.user_id, target_id):
+            reject(f"{target_id} is not one of the player's neighbours")
     if not storage.player_exists(target_id):
         reject(f"neighbor {target_id} does not exist")
 

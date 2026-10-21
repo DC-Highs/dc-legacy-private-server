@@ -81,3 +81,9 @@ export type Bootstrap = {
   flashVars: Record<string, string | boolean>
   legacyHosts: string[]
 }
+
+export type Friend = {
+  id: number
+  email: string
+  playerName: string
+}

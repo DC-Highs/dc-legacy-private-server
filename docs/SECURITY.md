@@ -24,7 +24,7 @@ Out of scope: someone with access to the host, the databases or the `.env` file.
 | The player id came from the request (`USERID`, `id`, `user_id`, `fb_sig_user`): anyone could play, read or **delete** any account. | Identity comes only from the login session. Client-sent ids are ignored (`routes/srv.py`, `routes/packet.py`). |
 | `user_id` was joined into a file path (`web/srv/<id>/`): `../` reached other directories and `/delete_profile` could `rmtree` them. | Saves live in MongoDB under an integer `_id`; there are no paths built from client input. `/delete_profile` is gone (admins delete users). |
 | `/delete_profile`, `/generate_pvp`, the market and minigame endpoints needed no login. | Every game endpoint requires a session; PvP generation is admin-only. |
-| Visiting an unknown neighbour created a new save for that id. | Visiting is read-only and returns 404 for unknown players. |
+| Visiting an unknown neighbour created a new save for that id, and any player's save could be read by anyone. | Visiting is read-only and only possible for **friends** (404 otherwise). |
 | Game files (`/flash`, `/assets`) were public. | They require a login. |
 | Wildcard CORS (`Access-Control-Allow-Origin: *`). | CORS is not enabled; the client and API share one origin. |
 | `str(exception)` returned to the client. | Generic 500 body; details go to the log. |
@@ -68,7 +68,7 @@ rolls the whole command back (the save is restored from a snapshot).
 | `weekly_reward` could be claimed again and again. | At most once every 5 days. |
 | `deus_cards_generate`/`claim`: unlimited free draws and re-rolls; claim without a draw. | One free draw per 24 h (or after the "retry" prize), consumed at draw time; claim only for a server-generated prize, once. |
 | `end_tournament`, `end_attack_f`: results could be reported without a fight, repeatedly. | A tournament must have begun; a PvP fight must have been started with `attack_player` against a real opponent, last 10 s–1 h, and is consumed when reported. |
-| `assist_receive` paid 10 xp + resources per call without limit; `assist_neighbor` appended unbounded data to anyone's save. | Assists are queued (size-limited, existing neighbour, not yourself) and each `assist_receive` consumes one real click. |
+| `assist_receive` paid 10 xp + resources per call without limit; `assist_neighbor` appended unbounded data to anyone's save. | Assists are queued (size-limited, only to friends, not yourself) and each `assist_receive` consumes one real click. |
 | `complete_collection` did not check the dragons. | The player must own every dragon of the collection. |
 | `collect fc` harvested crops before they grew. | The crop must have grown (`speed_collect` still works). The tutorial gets one early harvest because the client replays it in a single packet. |
 | `finish_training` was instant; `speed_training` taught the attack even when the gems were missing and priced it wrongly (integer key vs text key in the config). | Training must have run its time; `speed_training` charges the real price and requires the gems. |

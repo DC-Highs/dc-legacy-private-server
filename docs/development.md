@@ -59,6 +59,7 @@ The suite needs no services: accounts use in-memory SQLite and game saves use `m
 | `test_csrf.py` | Cross-site and `Origin: null` requests. |
 | `test_admin.py` | Admin access control and every admin operation. |
 | `test_game_security.py` | The client-injection attempts listed in [SECURITY.md](SECURITY.md), plus a normal play session. |
+| `test_friends.py` | Friendships: neighbours in `get_player_info`, friends-only visits and assists, the admin friend endpoints. |
 | `test_web.py` | Health check, serving the web client, security headers. |
 
 Tests that exercise the game use the `player` fixture (a registered, logged-in client), the

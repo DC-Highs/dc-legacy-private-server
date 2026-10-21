@@ -1,9 +1,10 @@
 """Data the web client needs to start the Flash game."""
 from flask import Blueprint, jsonify
 
-from src import storage
+from src import friends, storage
 from src.auth.context import current_user, login_required
 from src.config import LEGACY_GAME_HOSTS, get_settings
+from src.db.postgres import session_scope
 
 bp = Blueprint("api_game", __name__, url_prefix="/api/game")
 
@@ -16,6 +17,8 @@ def bootstrap():
     user = current_user()
     settings = get_settings()
     doc = storage.peek_player(user.id)
+    with session_scope() as session:
+        friends_flashvar = friends.friends_flashvar(session, user.id)
 
     return jsonify({
         "playerId": str(user.id),
@@ -35,7 +38,7 @@ def bootstrap():
             "offer_type": "1",
             "fb_promo_uri": "",
             "spdebug": "0",
-            "fb_sig_friends": "100000030",
+            "fb_sig_friends": friends_flashvar,
         },
         "legacyHosts": list(LEGACY_GAME_HOSTS),
     })

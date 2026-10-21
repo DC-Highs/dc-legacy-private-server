@@ -31,6 +31,7 @@ administrator. It also creates a fresh game save, exactly like a sign-up.
 | Administrator | Grants or removes admin rights. |
 | New password | Sets a password and logs the user out everywhere. |
 | Resources | Sets the player's gold, gems and food. |
+| Friends | Lists the player's friends (their neighbours in the game), removes one, or adds one by player id. Friendship is mutual. |
 | Reset game save | Replaces the save with a fresh one (all progress is lost). Asks for confirmation. |
 | Delete user | Deletes the account, its sessions and its save. Asks for confirmation. |
 
@@ -38,6 +39,23 @@ You cannot disable, demote or delete your own account from the panel, so an admi
 never lock the system out by mistake.
 
 ![The Manage dialog](https://i.ibb.co/FkvYbYBz/image.png)
+
+### Friends
+
+The game shows a player's friends as neighbours at the bottom of the island, and a player can
+visit them. Until players can send each other requests (see [ROADMAP.md](ROADMAP.md)),
+administrators create friendships: open a user, go to **Friends**, and add the other player's
+id (it is shown under each email in the users table). Both players see each other after they
+reload the game.
+
+> 📸 **Screenshot needed:** the "Friends" section of the Manage dialog with one friend listed.
+> Save it as `docs/images/admin-friends.png`, then replace this block with
+> `![The Friends section](images/admin-friends.png)`.
+
+> 📸 **Screenshot needed:** the game with a friend in the neighbours bar (and, if possible, the
+> "Visit / Send gift" menu open).
+> Save it as `docs/images/game-neighbours.png`, then replace this block with
+> `![A friend in the neighbours bar](images/game-neighbours.png)`.
 
 ## Command line
 

@@ -2,7 +2,7 @@
 import json
 import time
 
-from conftest import PASSWORD, edit_save, load_save, packet, register
+from conftest import PASSWORD, befriend, edit_save, load_save, packet, register
 
 FARM = 16          # food farm, costs 100 gold, no build time
 HABITAT = 24       # needs level 7, builds in an hour
@@ -68,6 +68,7 @@ def test_visiting_an_unknown_neighbour_does_not_create_a_save(client, player):
 
 def test_visiting_a_real_neighbour_is_read_only(app, client, player):
     other, other_id = second_player(app)
+    befriend(player["id"], other_id)
     before = load_save(other_id)
     response = client.get(f"/static/dragoncity/srv/get_player_info.json?user={other_id}")
     assert response.status_code == 200
@@ -350,6 +351,7 @@ def test_speed_training_cannot_be_used_for_free(client, player):
 
 def test_assists_are_queued_and_paid_only_for_real_clicks(app, client, player):
     other, other_id = second_player(app)
+    befriend(player["id"], other_id)
     packet(client, ("assist_receive", [FARM]))
     assert info(player["id"])["xp"] == 0                    # nothing to collect yet
 
@@ -366,7 +368,8 @@ def test_assists_are_queued_and_paid_only_for_real_clicks(app, client, player):
 
 
 def test_assists_have_a_size_limit(app, client, player):
-    other, _ = second_player(app)
+    other, other_id = second_player(app)
+    befriend(player["id"], other_id)
     packet(other, ("assist_neighbor", [player["id"], json.dumps(list(range(1000)))]))
     packet(client, ("ping",))
     assert "assistRewardsLeft" not in load_save(player["id"])["privateState"]

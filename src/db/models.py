@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Identity, Integer, String
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Identity, Integer, String, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 # BigInteger primary keys must be plain INTEGER on SQLite to auto-increment (used by the tests).
@@ -52,3 +52,25 @@ class LoginSession(Base):
     user_agent: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     user: Mapped[User] = relationship(back_populates="sessions")
+
+
+class Friendship(Base):
+    """A friendship (neighbours in the game) between two accounts.
+
+    The pair is stored once, ordered (``low_id`` < ``high_id``), so it cannot be duplicated in
+    the other direction. ``requester_id`` remembers who asked, for the pending/accepted flow.
+    """
+
+    __tablename__ = "friendships"
+    __table_args__ = (
+        UniqueConstraint("low_id", "high_id", name="uq_friendship_pair"),
+        CheckConstraint("low_id < high_id", name="ck_friendship_ordered"),
+    )
+
+    id: Mapped[int] = mapped_column(PrimaryKey, Identity(start=1), primary_key=True)
+    low_id: Mapped[int] = mapped_column(PrimaryKey, ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    high_id: Mapped[int] = mapped_column(PrimaryKey, ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    requester_id: Mapped[int] = mapped_column(PrimaryKey, ForeignKey("users.id", ondelete="CASCADE"))
+    status: Mapped[str] = mapped_column(String(16), default="accepted", server_default="accepted")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    responded_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)

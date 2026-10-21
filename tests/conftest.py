@@ -93,3 +93,12 @@ def edit_save(player_id, mutate):
         data = storage.load_player(int(player_id))
         mutate(data)
         storage.save_player(data, int(player_id))
+
+
+def befriend(a, b):
+    """Make two accounts friends (neighbours) directly in the database."""
+    from src import friends
+    from src.db.postgres import session_scope
+
+    with session_scope() as session:
+        friends.add_friends(session, int(a), int(b))

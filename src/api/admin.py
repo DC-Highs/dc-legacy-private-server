@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, or_, select
 
-from src import storage
+from src import friends, storage
 from src.api import parse_body
 from src.auth import service
 from src.auth.context import admin_required, current_user
@@ -38,6 +38,12 @@ class UpdateUserBody(BaseModel):
     password: Optional[str] = Field(default=None, max_length=256)
     is_admin: Optional[bool] = Field(default=None, alias="isAdmin")
     is_active: Optional[bool] = Field(default=None, alias="isActive")
+
+
+class AddFriendBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    friend_id: int = Field(alias="friendId", ge=1, le=2 ** 53)
 
 
 class ResourcesBody(BaseModel):
@@ -200,3 +206,42 @@ def set_resources(user_id: int):
 def generate_pvp():
     total = generate_pvp_opponents()
     return jsonify({"totalOpponents": total})
+
+
+def _friend_entry(user: User) -> dict:
+    doc = storage.peek_player(user.id)
+    return {"id": user.id, "email": user.email, "playerName": doc["playerInfo"].get("name", "") if doc else ""}
+
+
+@bp.get("/users/<int:user_id>/friends")
+@admin_required
+def list_friends(user_id: int):
+    with session_scope() as session:
+        _get_user(session, user_id)
+        return jsonify({"items": [_friend_entry(u) for u in friends.friends_of(session, user_id)]})
+
+
+@bp.post("/users/<int:user_id>/friends")
+@admin_required
+def add_friend(user_id: int):
+    body = parse_body(AddFriendBody)
+    with session_scope() as session:
+        _get_user(session, user_id)
+        friends.add_friends(session, user_id, body.friend_id)
+        items = [_friend_entry(u) for u in friends.friends_of(session, user_id)]
+    logger.info("Admin %s made %s and %s friends", current_user().id, user_id, body.friend_id)
+    response = jsonify({"items": items})
+    response.status_code = 201
+    return response
+
+
+@bp.delete("/users/<int:user_id>/friends/<int:friend_id>")
+@admin_required
+def remove_friend(user_id: int, friend_id: int):
+    with session_scope() as session:
+        _get_user(session, user_id)
+        if not friends.remove_friends(session, user_id, friend_id):
+            raise not_found("They are not friends")
+        items = [_friend_entry(u) for u in friends.friends_of(session, user_id)]
+    logger.info("Admin %s ended the friendship of %s and %s", current_user().id, user_id, friend_id)
+    return jsonify({"items": items})

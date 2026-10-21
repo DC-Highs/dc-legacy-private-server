@@ -8,11 +8,12 @@ import queue
 
 from flask import Blueprint, current_app, jsonify, request
 
-from src import storage
+from src import friends, storage
 from src.auth.context import current_user, login_required
 from src.config import SSE_KEEPALIVE_SECONDS
 from src.enums import SrvEndpoint, SseEvent
 from src.errors import ApiError, not_found, validation_error
+from src.db.postgres import session_scope
 from src.game.black_market import check_and_update_black_market
 from src.game.pvp import pvp_page
 from src.security import sign_packet
@@ -70,7 +71,11 @@ def _own_player_info(player_id: int):
         game_config = storage.config_for_player(player_id)
         player_data, game_config = check_and_update_black_market(player_data, player_id, game_config)
         storage.save_player(player_data, player_id)
-    return player_data
+
+    # The friends are looked up on every visit to the island and are not part of the saved data.
+    with session_scope() as session:
+        neighbors = friends.neighbors_payload(session, player_id)
+    return {**player_data, "neighbors": neighbors}
 
 
 @bp.route("/static/dragoncity/srv/<filename>", methods=["GET", "POST"])
@@ -91,6 +96,9 @@ def srv_handler(filename):
         if target_id is None:
             player_data = _own_player_info(player_id)
         else:
+            # Only friends can be visited.
+            with session_scope() as session:
+                friends.require_friendship(session, player_id, target_id)
             player_data = storage.peek_player(target_id)
             if player_data is None:
                 raise not_found("Neighbour not found")

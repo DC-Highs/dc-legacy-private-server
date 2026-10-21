@@ -80,6 +80,9 @@ All admin endpoints require an administrator (`401` when logged out, `403` other
 | `DELETE /users/{id}` | – | Deletes the account, its sessions and its save. |
 | `POST /users/{id}/reset-player` | – | Replaces the save with a fresh one. |
 | `PATCH /users/{id}/resources` | any of `{ gold, cash, food }` (0 – 2,000,000,000) | Sets those resources in the save. |
+| `GET /users/{id}/friends` | – | `{ items: [{ id, email, playerName }] }`, oldest friendship first. |
+| `POST /users/{id}/friends` | `{ friendId }` | Makes two accounts friends (mutual); `201 { items }`. `400` for yourself, `404` unknown id, `409` already friends. |
+| `DELETE /users/{id}/friends/{friendId}` | – | Ends the friendship; `{ items }`, `404` if they were not friends. |
 | `POST /pvp/generate` | – | Adds 8 random PvP opponents; `{ totalOpponents }`. |
 
 Safeguards: you cannot disable, demote or delete **your own** account; the search treats `%`

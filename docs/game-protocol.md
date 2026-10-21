@@ -9,7 +9,7 @@ For the JSON API of the web client see [api.md](api.md).
 | Endpoint | Auth | Purpose |
 |---|---|---|
 | `GET/POST /static/dragoncity/srv/get_game_config.json` (or `.php`) | login | The game configuration as `<signature>;<json>`, with the player's own black-market offers. |
-| `GET/POST /static/dragoncity/srv/get_player_info.json` (or `.php`) | login | The player's save, signed. With `?user=<id>` it returns a neighbour's save (read-only, `404` if unknown). For the player's own island it also refreshes the black market. |
+| `GET/POST /static/dragoncity/srv/get_player_info.json` (or `.php`) | login | The player's save, signed, with the `neighbors` list added (see [Neighbours](#neighbours)). With `user=<id>` it returns a **friend's** save, read-only (`404` for anyone who is not a friend). For the player's own island it also refreshes the black market. |
 | `GET/POST /static/dragoncity/srv/get_pvp_isle.json`, `.php`, `get_pvp_isle_info.php` | login | A page (8) of PvP opponents; `?level=N` (1–1000). |
 | `POST /static/dragoncity/srv/packet.php` | login | The batch of commands. See below. |
 | `GET /stream` | login | Server-Sent Events: `JUEGO_GUARDADO` after each saved packet, `PING` every 20 s. |
@@ -20,6 +20,30 @@ For the JSON API of the web client see [api.md](api.md).
 
 Responses that carry data are signed: `HMAC-SHA256(SECRET_KEY, json)` as hex, then `;`, then the
 compact JSON. The key is in `config.py`; it ships inside the SWF.
+
+## Neighbours
+
+How the Flash client gets and shows its friends (found by reading the SWF's ActionScript):
+
+1. The page starts the game with the flash variable `fb_sig_friends`: the ids of the player's
+   friends, comma separated. `GET /api/game/bootstrap` builds it from the friendships of the
+   account (empty when there are none).
+2. The client sends those ids to the server in `get_player_info` as the form field `neighbors`.
+   The server **ignores** it (the client is untrusted) and uses the friendships it stores.
+3. The response carries `neighbors`: one entry per friend,
+
+   ```json
+   { "pid": "200000012", "name": "bob", "xp": 0, "level": 1, "world_id": 0 }
+   ```
+
+   The client draws them in the bar at the bottom of the island (name, level star, xp).
+4. Clicking a neighbour opens a menu with **Visit** and **Send gift**. *Visit* calls
+   `get_player_info` with `user=<id>` and shows that player's island (read-only) with a
+   "Return home" button. The **Assist** button sends `assist_neighbor`.
+
+Friendships are mutual and are managed by administrators for now (see
+[administration.md](administration.md)); `neighbors` is computed on every request and is never
+stored in the save. Visiting and `assist_neighbor` are refused for anyone who is not a friend.
 
 ## `packet.php`
 
@@ -135,7 +159,7 @@ the server checks before changing anything.
 |---|---|---|
 | `attack_player` | opponent id | Starts a fight against a PvP opponent; returns their dragons. |
 | `end_attack_f` | opponent id, position, win, kills JSON | Reports the fight (needs `attack_player`, 10 s–1 h earlier); a win pays 35 points and counts towards the league. |
-| `assist_neighbor` | neighbour id, clicks JSON | Queues a help for another player. |
+| `assist_neighbor` | neighbour id, clicks JSON | Queues a help for a friend (neighbour). |
 | `assist_receive` | item type | Collects the reward of one received help. |
 | `clean_received_assists` | helper id | Removes a helper's entry. |
 
