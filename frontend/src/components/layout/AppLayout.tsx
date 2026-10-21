@@ -20,9 +20,9 @@ export const AppLayout: FC = () => {
 
   return (
     <PendingProvider>
-      <div className="flex h-dvh flex-col bg-background text-foreground">
+      <div className="flex h-full flex-col overflow-hidden bg-background text-foreground">
         <AppHeader saved={saved} />
-        <main className="min-h-0 flex-1 overflow-auto">
+        <main className="min-h-0 flex-1 overflow-hidden">
           <Outlet context={{ flashSaved } satisfies LayoutContext} />
         </main>
       </div>
