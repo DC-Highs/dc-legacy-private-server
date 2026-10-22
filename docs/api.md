@@ -83,6 +83,8 @@ All admin endpoints require an administrator (`401` when logged out, `403` other
 | `GET /users/{id}/friends` | – | `{ items: [{ id, email, playerName }] }`, oldest friendship first. |
 | `POST /users/{id}/friends` | `{ friendId }` | Makes two accounts friends (mutual); `201 { items }`. `400` for yourself, `404` unknown id, `409` already friends. |
 | `DELETE /users/{id}/friends/{friendId}` | – | Ends the friendship; `{ items }`, `404` if they were not friends. |
+| `GET /game-version` | – | `{ selected, default, versions: [{ file, version }] }`: the clients in `flash/versions/`. |
+| `PUT /game-version` | `{ file }` | Chooses the client every player loads; same result as `GET`. `400` if the file is not in `versions`. |
 | `POST /pvp/generate` | – | Adds 8 random PvP opponents; `{ totalOpponents }`. |
 
 Safeguards: you cannot disable, demote or delete **your own** account; the search treats `%`

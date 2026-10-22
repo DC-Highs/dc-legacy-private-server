@@ -19,7 +19,7 @@ to the containers. The code reads them in `src/config.py`.
 | `SESSION_DAYS` | `14` | Days a login stays valid (renewed while in use). |
 | `MAX_FRIENDS` | `20` | The most friends an account can have. Lowering it does not remove existing friends; it only blocks new ones. |
 | `MAX_PENDING_REQUESTS` | `5` | Sent friend requests that can wait for an answer at once, per account. |
-| `GAME_SWF` | `Base_sec_0.6.7c.swf` | Which Flash client in `flash/` is loaded. |
+| `GAME_SWF` | `Base_sec_0.6.7c.swf` | The Flash client in `flash/versions/` loaded until an admin picks another one in the panel. |
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR`. |
 
 Choose long random values for the passwords. They are only used inside the compose network.
@@ -37,7 +37,7 @@ server without compose.
 | `MONGO_USER`, `MONGO_PASSWORD` | empty | MongoDB credentials, authenticated against the `admin` database. |
 | `MONGO_DB` | `dragoncity` | Database name. |
 | `SEED_DIR` | `web/srv` (image: `/app/seed`) | Read-only seed data: game config, player template, PvP opponents. |
-| `FLASH_DIR` | `flash` (image: `/data/flash`) | The Flash SWF files. |
+| `FLASH_DIR` | `flash` (image: `/data/flash`) | The Flash files: `DCLoader.swf` and the clients in `versions/`. |
 | `ASSETS_DIR` | `assets` (image: `/data/assets`) | Game assets (sprites, sounds, fonts). |
 | `DOMAIN_MAP_DIR` | `domains` (image: `/data/domains`) | Files that used to live on the game's original domains (translations, `crossdomain.xml`). |
 | `FRONTEND_DIST` | `frontend/dist` (image: `/app/frontend/dist`) | The built web client. |

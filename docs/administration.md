@@ -14,6 +14,14 @@ list is paged (15 per page).
 
 ![The users table](https://i.ibb.co/39Wx71d3/image.png)
 
+### Game version
+
+The **Game version** button lists the clients found in `flash/versions/` (every `*.swf` with a
+plain file name, oldest first) and lets you pick the one every player loads. The choice is saved
+in the database and survives restarts; `GAME_SWF` is only the version used until someone picks
+one, or when the picked file is gone. Players already in the game keep their version until they
+reload. Other versions may expect commands the server does not handle yet.
+
 ### Creating a user
 
 "New user" asks for an email, a password (8–128 characters) and whether the account is an
