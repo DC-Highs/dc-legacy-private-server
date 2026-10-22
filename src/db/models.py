@@ -74,3 +74,13 @@ class Friendship(Base):
     status: Mapped[str] = mapped_column(String(16), default="accepted", server_default="accepted")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     responded_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AppSetting(Base):
+    """A server-wide setting changed from the admin panel (a key/value pair)."""
+
+    __tablename__ = "app_settings"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str] = mapped_column(String(255))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)

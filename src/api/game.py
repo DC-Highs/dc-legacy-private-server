@@ -1,9 +1,9 @@
 """Data the web client needs to start the Flash game."""
 from flask import Blueprint, jsonify
 
-from src import friends, storage
+from src import friends, game_versions, storage
 from src.auth.context import current_user, login_required
-from src.config import LEGACY_GAME_HOSTS, get_settings
+from src.config import LEGACY_GAME_HOSTS
 from src.db.postgres import session_scope
 
 bp = Blueprint("api_game", __name__, url_prefix="/api/game")
@@ -15,10 +15,10 @@ SERVICES_PATH = "/static/dragoncity/"
 @login_required
 def bootstrap():
     user = current_user()
-    settings = get_settings()
     doc = storage.peek_player(user.id)
     with session_scope() as session:
         friends_flashvar = friends.friends_flashvar(session, user.id)
+        swf_version = game_versions.selected_version(session)
 
     return jsonify({
         "playerId": str(user.id),
@@ -27,7 +27,7 @@ def bootstrap():
         "servicesPath": SERVICES_PATH,
         # Variables the Flash client reads; the web client adds the services URL of this server.
         "flashVars": {
-            "swftoload": "flash/" + settings.swf_version,
+            "swftoload": "flash/versions/" + swf_version,
             "use_assets_opt": True,
             "fb_sig_user": str(user.id),
             "language": "en",

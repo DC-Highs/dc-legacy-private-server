@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, or_, select
 
-from src import friends, storage
+from src import friends, game_versions, storage
 from src.api import parse_body
 from src.auth import service
 from src.auth.context import admin_required, current_user
@@ -45,6 +45,12 @@ class AddFriendBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     friend_id: int = Field(alias="friendId", ge=1, le=2 ** 53)
+
+
+class GameVersionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    file: str = Field(max_length=255)
 
 
 class ResourcesBody(BaseModel):
@@ -254,3 +260,29 @@ def remove_friend(user_id: int, friend_id: int):
         items = [_friend_entry(u) for u in friends.friends_of(session, user_id)]
     logger.info("Admin %s ended the friendship of %s and %s", current_user().id, user_id, friend_id)
     return jsonify({"items": items})
+
+def _game_version_payload(session) -> dict:
+    return {
+        "selected": game_versions.selected_version(session),
+        "default": game_versions.default_version(),
+        "versions": game_versions.available_versions(),
+    }
+
+
+@bp.get("/game-version")
+@admin_required
+def get_game_version():
+    with session_scope() as session:
+        return jsonify(_game_version_payload(session))
+
+
+@bp.put("/game-version")
+@admin_required
+def set_game_version():
+    body = parse_body(GameVersionBody)
+    with session_scope() as session:
+        if not game_versions.select_version(session, body.file):
+            raise validation_error({"file": "This version is not in flash/versions"})
+        payload = _game_version_payload(session)
+    logger.info("Admin %s selected the game version %s", current_user().id, body.file)
+    return jsonify(payload)
