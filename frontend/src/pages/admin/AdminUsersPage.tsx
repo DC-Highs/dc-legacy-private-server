@@ -1,4 +1,4 @@
-import { PlusIcon, SearchIcon } from "lucide-react"
+import { GamepadIcon, PlusIcon, SearchIcon } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import type { FC } from "react"
 import { toast } from "sonner"
@@ -12,6 +12,7 @@ import { Typography } from "@/components/ui/typography"
 import { api } from "@/lib/api"
 import type { User, UsersPage } from "@/lib/api"
 import { CreateUserDialog } from "@/pages/admin/CreateUserDialog"
+import { GameVersionDialog } from "@/pages/admin/GameVersionDialog"
 import { ManageUserDialog } from "@/pages/admin/ManageUserDialog"
 
 const PAGE_SIZE = 15
@@ -27,6 +28,7 @@ export const AdminUsersPage: FC = () => {
   const [data, setData] = useState<UsersPage | null>(null)
   const [loading, setLoading] = useState(true)
   const [createOpen, setCreateOpen] = useState(false)
+  const [versionOpen, setVersionOpen] = useState(false)
   const [managed, setManaged] = useState<User | null>(null)
 
   useEffect(() => {
@@ -74,6 +76,9 @@ export const AdminUsersPage: FC = () => {
               aria-label="Search users"
             />
           </div>
+          <Button variant="outline" onClick={() => setVersionOpen(true)}>
+            <GamepadIcon /> Game version
+          </Button>
           <Button onClick={() => setCreateOpen(true)}>
             <PlusIcon /> New user
           </Button>
@@ -151,6 +156,7 @@ export const AdminUsersPage: FC = () => {
         </Button>
       </div>
 
+      <GameVersionDialog open={versionOpen} onOpenChange={setVersionOpen} />
       <CreateUserDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={load} />
       <ManageUserDialog
         user={managed}
