@@ -37,10 +37,13 @@ Migrations: edit `src/db/models.py`, autogenerate with Alembic against a real Po
 - **Deus** (`system_accounts.py`): the client's built-in "Deus" card visits the fixed id `DEUS_PLAYER_ID` (100000030). A disabled system account + save is created at start-up and is the only non-friend that can be visited; without it the client hangs on a progress bar.
 - **Single process on purpose** (`docker/gunicorn.conf.py`): per-player locks, SSE channels and the rate limiter are in memory. Don't add workers/replicas without moving those to a shared store.
 - **Ruffle integration** (`frontend/src/components/game/ruffle.ts`): the SWF has the original hosts hardcoded, so Ruffle gets `urlRewriteRules` built from `legacyHosts` (`api/game.py`) that send them to this server; flash variables come from `GET /api/game/bootstrap`.
+- **Game version** (`src/game_versions.py`): the Flash clients live in `flash/versions/` (the loader, `flash/DCLoader.swf`, is not one of them). `GET/PUT /api/admin/game-version` lets an admin pick which one `bootstrap` sends the client; the choice is stored in PostgreSQL (`app_settings`) so it survives restarts, falling back to `GAME_SWF` if the stored file is gone. A newer client version is not guaranteed to work: it may expect commands or a `get_game_config.json` shape this server doesn't have yet (see `docs/commands-roadmap.md`).
 
 ## Rules that must hold when touching commands
 
 The client is untrusted (see `docs/SECURITY.md`). In a command: read arguments only through `ctx.int_arg/uid_arg/iso_arg/flag_arg/text_arg` (not `ctx.args[i]`), validate before mutating, charge with `ctx.pay()` (never `max(0, ...)`), take rewards from config/server state rather than client values, use `ctx.new_uid` for client-chosen ids, and `reject("...")` on anything wrong. Real client behaviour matters: the tutorial replays many commands in a single packet, so server-time checks between commands of one packet are unreliable (see `commands/collect.py`'s one-time tutorial harvest exception).
+
+Before adding a command that isn't in `Command` (`enums.py`) yet, check `docs/commands-roadmap.md`: it tracks which candidate commands (mined from the client SWFs' strings) already have a confirmed cost/reward/state in the game config or the save template, versus which are still guesses. Only implement one once its mechanic is grounded there — a guessed price or reward is a duplication bug waiting to happen. The reliable way to confirm a command is real and see its actual args is `docker compose logs -f app | grep "is not implemented"` while playing; the `jpexs` MCP server (`.mcp.json`, wraps JPEXS FFDec, needs Java on `PATH`) can decompile a client SWF's ActionScript when string-mining alone isn't enough.
 
 ## Conventions specific to this repo
 
