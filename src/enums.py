@@ -12,6 +12,7 @@ class Command(str, Enum):
     BUY = "buy"
     BUY_EGG = "buy_egg"
     HATCH_EGG = "hatch_egg"
+    MISTERY_EGG_HATCH = "mistery_egg_hatch"
     FEED_DRAGON = "feed_dragon"
     SET_GOALS = "set_goals"
     COMPLETE_GOAL = "complete_goal"
