@@ -32,6 +32,37 @@ Nenhuma mudança no frontend (Vite) foi necessária: `mistery_egg_hatch` é só 
 `packet.php`, que já passa pela sessão, pelo CSRF e pelo rate limit existentes — a mesma
 infraestrutura que protege todos os outros comandos.
 
+## Status do segundo lote (2026-10-23)
+
+Investigando os candidatos de confiança média, descobri que `message`, `gifts` e
+`resourceAlliesMarket` já são campos reservados em `privateState`/`map` desde o template de save
+(`web/srv/get_player_info.json`), e `collectGame` também — ou seja, são sistemas reais, só que
+maiores do que "mais um comando", porque dois deles (`place_gift`, `create_message`) escrevem no
+save de **outro** jogador, o mesmo tipo de operação sensível que hoje só existe em
+`pending_assists`. Perguntei qual encarar primeiro; a escolha foi **Allies Market**
+(`set_resource_allies`).
+
+- **`set_resource_allies`** — implementado, com escopo deliberadamente reduzido. Confirmei: item
+  79 (`ALLIES_MARKET` na config, `group_type: SOCIAL BUILDING`, sprite
+  `0079_allies_market.swf`) tem 6 cargos de trabalhador (`social_items` id 79), e o nome do
+  comando usa o verbo `set_`, não `collect_`, então implementei só a troca do time de
+  trabalhadores — os amigos atribuídos a cada cargo — igual ao `set_attack_team`, sem pagar ouro
+  ou comida. A config tem `RESOURCES_MARKET_PER_ALLY` (`{g: 500, f: 50}`), que sugere uma fórmula
+  de produção por aliado, mas não achei o comando que a cobraria nem a cadência (por tempo? por
+  clique?), então nenhum recurso é concedido até isso ser confirmado. Ver
+  `src/commands/set_resource_allies.py` e `tests/test_set_resource_allies.py`.
+  - **Ressalva honesta**: o campo `name` do item 79 nesta captura da config é "Dragon Market",
+    não "Allies Market". Confiei no nome do arquivo do sprite e no global `ALLIES_MARKET=79`
+    por serem mais específicos, mas é uma discrepância real que vale conferir nos logs.
+  - Cada amigo atribuído é validado contra `friends.are_friends` (Postgres), igual ao
+    `assist_neighbor` já existente — não dá para colocar um estranho para "trabalhar".
+- **`place_gift`, `create_message`** — adiados por decisão do usuário. Ambos precisam de um
+  desenho deliberado antes de qualquer código, porque envolvem escrever no save de outro
+  jogador (limites de frequência, só-entre-amigos, e para `create_message` também sanitização de
+  texto livre).
+- **`collect_game_*`** — confirmado como sistema completo (`privateState.collectGame` + 5 tabelas
+  de config), mas segue fora de escopo por ser do tamanho de uma feature nova.
+
 > Arquivo temporário de trabalho, gerado a partir de mineração de strings dos clientes SWF em
 > `flash/versions/`. **Não é uma confirmação**: extraí apenas as strings do SWF, sem decompilar o
 > bytecode AS3. Os nomes abaixo são candidatos — alguns podem ser nomes de configuração, de assets

@@ -70,6 +70,7 @@ class Command(str, Enum):
     KOMPU_BOXES_NEW_LIST = "kompu_boxes_new_list"
     KOMPU_BOXES_OPEN_BOX = "kompu_boxes_open_box"
     KOMPU_BOXES_CLAIM_PRIZE = "kompu_boxes_claim_prize"
+    SET_RESOURCE_ALLIES = "set_resource_allies"
 
 
 class SseEvent(str, Enum):
@@ -108,6 +109,7 @@ class GroupType(str, Enum):
     HABITAT = "HABITAT"
     FARM = "FARM"
     OBSTACLE = "OBSTACLE"
+    SOCIAL_BUILDING = "SOCIAL BUILDING"
 
 
 class DragonAttribute(str, Enum):
